@@ -68,14 +68,15 @@ LOGIN_REDIRECT_URL = '/news/'
 LOGOUT_REDIRECT_URL = '/news/'
 
 # IAM认证配置
+# 警告: 以下为开发占位符，生产环境必须通过环境变量配置真实凭据
 IAM_CONFIG = {
     'OAUTH2_PROVIDER': {
         'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,
     },
-    'SOCIAL_AUTH_OA_KEY': 'test_client_id',
-    'SOCIAL_AUTH_OA_SECRET': 'test_client_secret',
-    'OA_USER_INFO_URL': 'https://example.com/api/userinfo',
-    'OA_TOKEN_URL': 'https://example.com/oauth/token',
+    'SOCIAL_AUTH_OA_KEY': os.environ.get('SOCIAL_AUTH_OA_KEY', 'dev_placeholder'),
+    'SOCIAL_AUTH_OA_SECRET': os.environ.get('SOCIAL_AUTH_OA_SECRET', 'dev_placeholder'),
+    'OA_USER_INFO_URL': os.environ.get('OA_USER_INFO_URL', 'https://example.com/api/userinfo'),
+    'OA_TOKEN_URL': os.environ.get('OA_TOKEN_URL', 'https://example.com/oauth/token'),
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -217,22 +218,44 @@ WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'tx
 # Maximum upload size for documents in bytes (10MB)
 WAGTAILDOCS_MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
+# 文件上传安全
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+
 # 安全配置
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
+SECURE_HSTS_SECONDS = 0  # 生产环境在production.py中覆盖
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = 86400  # 24小时
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+CSRF_COOKIE_HTTPONLY = True
 
 # DRF 配置
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour',
+    },
 }
 
 # 日志配置

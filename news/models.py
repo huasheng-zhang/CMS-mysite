@@ -201,6 +201,22 @@ class NewsArticle(Page):
         if hasattr(self, 'body') and self.body:
             self.content = str(self.body)
 
+        # 安全: 过滤content中的危险HTML标签(防止存储型XSS)
+        if self.content:
+            import re
+            # Remove script, iframe, object, embed, form tags and their content
+            dangerous_patterns = [
+                r'<script[^>]*>.*?</script>',
+                r'<iframe[^>]*>.*?</iframe>',
+                r'<object[^>]*>.*?</object>',
+                r'<embed[^>]*>',
+                r'<form[^>]*>.*?</form>',
+                r'\bon\w+\s*=\s*["\'][^"\']*["\']',  # inline event handlers
+                r'javascript\s*:',  # javascript: URLs
+            ]
+            for pattern in dangerous_patterns:
+                self.content = re.sub(pattern, '', self.content, flags=re.IGNORECASE | re.DOTALL)
+
         super().save(*args, **kwargs)
 
     def get_read_count(self):
@@ -225,6 +241,11 @@ class NewsArticle(Page):
         verbose_name = "新闻文章"
         verbose_name_plural = "新闻文章"
         ordering = ['-publish_date']
+        indexes = [
+            models.Index(fields=['status', 'publish_date']),
+            models.Index(fields=['category', 'status']),
+            models.Index(fields=['is_featured', 'status']),
+        ]
 
 
 class ArticleReadRecord(models.Model):
@@ -298,7 +319,10 @@ class ArticleComment(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        indexes = [models.Index(fields=['article', 'is_approved'])]
+        indexes = [
+            models.Index(fields=['article', 'is_approved']),
+            models.Index(fields=['article', 'is_approved', '-created_at']),
+        ]
 
 
 class NewsIndexPage(Page):

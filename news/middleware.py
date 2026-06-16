@@ -28,7 +28,7 @@ class ReadTrackingMiddleware:
                         article=request.article,
                         user=request.user,
                         ip_address=self.get_client_ip(request),
-                        user_agent=request.META.get('HTTP_USER_AGENT', '')[:500]
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')[:200]
                     )
                     logger.debug(
                         f'记录阅读: 用户 {request.user.username} '
@@ -45,4 +45,7 @@ class ReadTrackingMiddleware:
             ip = x_forwarded_for.split(',')[0].strip()
         else:
             ip = request.META.get('REMOTE_ADDR')
+        # 基本IP地址格式验证
+        if ip and len(ip) > 45:  # IPv6 max length
+            ip = ip[:45]
         return ip

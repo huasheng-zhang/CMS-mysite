@@ -4,10 +4,10 @@ import os
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECURITY WARNING: 此密钥仅用于开发环境，生产环境必须通过环境变量设置强密钥
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
-    'django-insecure-6^0%e-s64$(i!x0h$+)32(+j#i-_-7%=#qt0syqz6=1-b13ea$'
+    'django-insecure-dev-only-do-not-use-in-production-6^0%e-s64$(i!x0h$+)32'
 )
 
 # SECURITY WARNING: define the correct hosts in production!

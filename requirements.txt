@@ -10,3 +10,4 @@ django-extensions>=3.2
 wagtail-modeladmin>=2.0
 Pillow>=10.0
 gunicorn>=21.2
+bleach>=6.0

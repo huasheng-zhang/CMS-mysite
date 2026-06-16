@@ -3,13 +3,16 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Prefetch
+from django.db import transaction
 from django.core.cache import cache
 from django.contrib import messages
 from django.utils import timezone
+from taggit.models import Tag
 from .models import NewsArticle, NewsCategory, NewsIndexPage, ArticleLike, ArticleComment
 from .forms import NewsArticleForm
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +50,7 @@ def news_list(request):
     """新闻列表页面"""
     articles = NewsArticle.objects.with_counts().published().select_related(
         'author', 'category'
-    ).order_by('-publish_date')
+    ).prefetch_related('tagged_items__tag').order_by('-publish_date')
 
     # 获取筛选参数
     category_id = request.GET.get('category')
@@ -59,8 +62,7 @@ def news_list(request):
     if search_query:
         articles = articles.filter(
             Q(title__icontains=search_query) |
-            Q(intro__icontains=search_query) |
-            Q(content__icontains=search_query)
+            Q(intro__icontains=search_query)
         )
 
     # 分页
@@ -82,7 +84,7 @@ def news_list(request):
 def news_detail(request, slug):
     """新闻详情页面"""
     article = get_object_or_404(
-        NewsArticle.objects.with_counts().select_related('author', 'category'),
+        NewsArticle.objects.with_counts().select_related('author', 'category').prefetch_related('tagged_items__tag'),
         slug=slug,
         status='published'
     )
@@ -92,7 +94,7 @@ def news_detail(request, slug):
     # 获取相关文章
     related_articles = NewsArticle.objects.with_counts().published().select_related(
         'author', 'category'
-    ).filter(
+    ).prefetch_related('tagged_items__tag').filter(
         category=article.category,
     ).exclude(id=article.id)[:5] if article.category else NewsArticle.objects.none()
 
@@ -239,18 +241,17 @@ def like_article(request, slug):
 
     article = get_object_or_404(NewsArticle, slug=slug)
 
-    like, created = ArticleLike.objects.get_or_create(
-        article=article,
-        user=request.user
-    )
-
-    if not created:
-        like.delete()
-        liked = False
-    else:
-        liked = True
-
-    like_count = ArticleLike.objects.filter(article=article).count()
+    with transaction.atomic():
+        like, created = ArticleLike.objects.get_or_create(
+            article=article,
+            user=request.user
+        )
+        if not created:
+            like.delete()
+            liked = False
+        else:
+            liked = True
+        like_count = ArticleLike.objects.filter(article=article).count()
 
     return JsonResponse({
         'liked': liked,
@@ -269,7 +270,9 @@ def add_comment(request, slug):
     if not article.allow_comments:
         return JsonResponse({'success': False, 'error': '该文章不允许评论'}, status=403)
 
-    content = request.POST.get('content', '').strip()
+    raw_content = request.POST.get('content', '').strip()
+    # Strip HTML tags to prevent stored XSS
+    content = re.sub(r'<[^>]+>', '', raw_content).strip()
     if len(content) < 2:
         return JsonResponse({'success': False, 'error': '评论内容至少2个字符'}, status=400)
 
@@ -303,19 +306,25 @@ def news_home(request):
     """新闻首页 - 显示最新文章"""
     latest_articles = NewsArticle.objects.with_counts().published().select_related(
         'author', 'category'
-    ).order_by('-publish_date')[:6]
+    ).prefetch_related('tagged_items__tag').order_by('-publish_date')[:6]
 
     featured_articles = NewsArticle.objects.with_counts().published().select_related(
         'author', 'category'
-    ).filter(
+    ).prefetch_related('tagged_items__tag').filter(
         is_featured=True
     ).order_by('-publish_date')[:3]
+
+    # Add dedicated popular articles query with annotated counts
+    popular_articles = NewsArticle.objects.with_counts().published().select_related(
+        'author', 'category'
+    ).prefetch_related('tagged_items__tag').order_by('-_read_count')[:5]
 
     categories = get_cached_categories()
 
     context = {
         'latest_articles': latest_articles,
         'featured_articles': featured_articles,
+        'popular_articles': popular_articles,
         'categories': categories,
     }
     return render(request, 'news/home.html', context)

@@ -3,91 +3,223 @@
 
 {% block title %}个人资料 - CMS新闻管理系统{% endblock %}
 
+{% block extra_css %}
+<style>
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .profile-header i {
+        color: var(--primary);
+    }
+
+    /* Info card */
+    .info-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg-card);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    .info-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .info-table tr {
+        border-bottom: 1px solid var(--border);
+    }
+    .info-table tr:last-child {
+        border-bottom: none;
+    }
+    .info-table td {
+        padding: 0.875rem 1.25rem;
+        font-size: 0.9375rem;
+    }
+    .info-label {
+        color: var(--text-muted);
+        font-weight: 500;
+        width: 120px;
+        white-space: nowrap;
+    }
+    .info-value {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    /* Articles card */
+    .articles-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg-card);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    .articles-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .articles-card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    /* Article row */
+    .article-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        text-decoration: none;
+        color: var(--text-secondary);
+        transition: all 0.15s ease;
+    }
+    .article-row:last-child {
+        border-bottom: none;
+    }
+    .article-row:hover {
+        background-color: rgba(79, 70, 229, 0.03);
+        color: var(--primary);
+    }
+    .article-row-title {
+        font-weight: 600;
+        font-size: 0.9375rem;
+        margin-bottom: 0.25rem;
+        color: var(--text-primary);
+    }
+    .article-row:hover .article-row-title {
+        color: var(--primary);
+    }
+    .article-row-meta {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .status-published {
+        background: rgba(5, 150, 105, 0.1);
+        color: var(--success);
+    }
+    .status-draft {
+        background: rgba(100, 116, 139, 0.1);
+        color: #64748b;
+    }
+    .article-row-stats {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
-    <div class="col-md-8 mx-auto">
-        <h2 class="mb-4"><i class="fas fa-id-card"></i> 个人资料</h2>
+    <div class="col-lg-8 mx-auto">
+        <div class="profile-header">
+            <i class="fas fa-id-card"></i> 个人资料
+        </div>
 
-        <div class="card mb-4">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">基本信息</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td class="text-muted" style="width: 100px;">用户名</td>
-                                <td><strong>{{ request.user.username }}</strong></td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">邮箱</td>
-                                <td><strong>{{ request.user.email }}</strong></td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">部门</td>
-                                <td>{{ profile.department|default:"-" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">职位</td>
-                                <td>{{ profile.position|default:"-" }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td class="text-muted" style="width: 100px;">员工ID</td>
-                                <td>{{ profile.employee_id|default:"-" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">电话</td>
-                                <td>{{ profile.phone|default:"-" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">位置</td>
-                                <td>{{ profile.location|default:"-" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">个人简介</td>
-                                <td>{{ profile.bio|default:"-" }}</td>
-                            </tr>
-                        </table>
-                    </div>
+        <div class="info-card mb-4">
+            <div class="info-card-header">基本信息</div>
+            <div class="row g-0">
+                <div class="col-md-6">
+                    <table class="info-table">
+                        <tr>
+                            <td class="info-label">用户名</td>
+                            <td class="info-value"><strong>{{ request.user.username }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">邮箱</td>
+                            <td class="info-value"><strong>{{ request.user.email }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">部门</td>
+                            <td class="info-value">{{ profile.department|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">职位</td>
+                            <td class="info-value">{{ profile.position|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="info-table">
+                        <tr>
+                            <td class="info-label">员工ID</td>
+                            <td class="info-value">{{ profile.employee_id|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">电话</td>
+                            <td class="info-value">{{ profile.phone|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">位置</td>
+                            <td class="info-value">{{ profile.location|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">个人简介</td>
+                            <td class="info-value">{{ profile.bio|default:"-" }}</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
         </div>
 
         <!-- 我的文章 -->
-        <div class="card mb-4">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">我的文章</h5>
-                <a href="{% url 'create_news_article' %}" class="btn btn-sm btn-primary">
+        <div class="articles-card mb-4">
+            <div class="articles-card-header">
+                <h5>我的文章</h5>
+                <a href="{% url 'create_news_article' %}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> 发布新文章
                 </a>
             </div>
-            <div class="list-group list-group-flush">
+            <div>
                 {% for article in user_articles %}
-                <a href="{% url 'news_detail' article.slug %}" class="list-group-item list-group-item-action">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">{{ article.title }}</h6>
-                            <small class="text-muted">
-                                {{ article.publish_date|date:"Y-m-d H:i"|default:"未发布" }} &middot;
-                                <span class="badge {% if article.status == 'published' %}bg-success{% else %}bg-secondary{% endif %}">
-                                    {{ article.get_status_display }}
-                                </span>
-                            </small>
+                <a href="{% url 'news_detail' article.slug %}" class="article-row">
+                    <div>
+                        <div class="article-row-title">{{ article.title }}</div>
+                        <div class="article-row-meta">
+                            <span>{{ article.publish_date|date:"Y-m-d H:i"|default:"未发布" }}</span>
+                            <span class="status-badge {% if article.status == 'published' %}status-published{% else %}status-draft{% endif %}">
+                                {{ article.get_status_display }}
+                            </span>
                         </div>
-                        <span class="text-muted">
-                            <i class="fas fa-eye"></i> {{ article.get_read_count }} &middot;
-                            <i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}
-                        </span>
                     </div>
+                    <span class="article-row-stats">
+                        <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
+                        <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
+                    </span>
                 </a>
                 {% empty %}
-                <div class="list-group-item text-center text-muted py-4">
-                    暂无文章，<a href="{% url 'create_news_article' %}">发布第一篇</a>
+                <div class="article-row" style="justify-content: center; color: var(--text-muted);">
+                    暂无文章，<a href="{% url 'create_news_article' %}" style="color: var(--primary); font-weight: 500;">发布第一篇</a>
                 </div>
                 {% endfor %}
             </div>
