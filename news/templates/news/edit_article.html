@@ -1,6 +1,10 @@
 {% extends 'news/base.html' %}
 {% block title %}编辑 - {{ article.title }}{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/pandao/editor.md@1.5.0/css/editormd.min.css">
+{% endblock %}
+
 {% block content %}
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <span style="font-size:18px;font-weight:600;">编辑文章</span>
@@ -28,6 +32,14 @@
         <div class="form-group">
             <label>正文内容</label>
             {{ form.content }}
+            <!-- Editor.md 富文本编辑器容器 -->
+            <div id="editormd">
+                <textarea style="display:none;"></textarea>
+            </div>
+            <div id="existing-content-preview" style="display:none;margin-top:8px;padding:16px;border:1px solid var(--divider);border-radius:4px;background:var(--bg);font-size:13px;color:var(--text-3);">
+                <div style="font-weight:500;margin-bottom:8px;"><i class="fas fa-info-circle"></i> 原有内容预览（HTML格式）：</div>
+                <div id="existing-content-html" style="max-height:200px;overflow:auto;border-radius:4px;padding:12px;background:var(--white);"></div>
+            </div>
             {% if form.content.errors %}<div class="form-error">{{ form.content.errors }}</div>{% endif %}
         </div>
         <div style="display:flex;gap:12px;">
@@ -73,8 +85,49 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/pandao/editor.md@1.5.0/editormd.min.js"></script>
 <script>
 $(document).ready(function() {
+    // 处理已有HTML内容：如果content字段包含HTML，显示在预览区域而不是放入markdown编辑器
+    var existingContent = $('#id_content').val();
+    if (existingContent && existingContent.indexOf('<') !== -1) {
+        // 已有内容是HTML格式，在预览区域展示
+        $('#existing-content-html').html(existingContent);
+        $('#existing-content-preview').show();
+        // 编辑器初始为空，用户可以用Markdown添加新内容
+        // 提交时保留原有HTML + 新增Markdown的HTML
+    }
+
+    var editor = editormd("editormd", {
+        width: "100%",
+        height: 500,
+        path: "https://cdn.jsdelivr.net/gh/pandao/editor.md@1.5.0/lib/",
+        theme: "default",
+        previewTheme: "default",
+        editorTheme: "default",
+        markdown: "",
+        codeFold: true,
+        syncScrolling: "single",
+        saveHTMLToTextarea: true,
+        searchReplace: true,
+        emoji: false,
+        tocm: false,
+        imageUpload: true,
+        imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+        imageUploadURL: "{% url 'upload_editor_image' %}",
+        toolbarAutoFixed: true,
+        onchange: function() {
+            var newHtml = editor.getHTML();
+            if (existingContent && existingContent.indexOf('<') !== -1 && !editor.getMarkdown().trim()) {
+                // 编辑器为空时保留原有HTML内容
+                $('#id_content').val(existingContent);
+            } else {
+                $('#id_content').val(newHtml);
+            }
+        }
+    });
+
     $('#id_image').on('change', function(e) {
         var file = e.target.files[0];
         if (file) {
@@ -83,7 +136,21 @@ $(document).ready(function() {
             reader.readAsDataURL(file);
         }
     });
-    $('#article-form').on('submit', function() { $('#submit-btn').prop('disabled', true).html('<span class="loading-spinner"></span> 保存中...'); });
+
+    // 表单提交前确保HTML内容已同步到hidden input
+    $('#article-form').on('submit', function() {
+        if (editor) {
+            var md = editor.getMarkdown().trim();
+            if (md) {
+                // 编辑器有新内容，用新的HTML替换
+                $('#id_content').val(editor.getHTML());
+            } else if (existingContent) {
+                // 编辑器为空，保留原有HTML内容
+                $('#id_content').val(existingContent);
+            }
+        }
+        $('#submit-btn').prop('disabled', true).html('<span class="loading-spinner"></span> 保存中...');
+    });
 });
 </script>
 {% endblock %}

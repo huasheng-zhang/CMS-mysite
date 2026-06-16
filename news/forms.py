@@ -22,10 +22,8 @@ class NewsArticleForm(forms.ModelForm):
                 'rows': 3,
                 'placeholder': '请输入文章简介（用于列表页显示）'
             }),
-            'content': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 12,
-                'placeholder': '请输入文章内容'
+            'content': forms.HiddenInput(attrs={
+                'id': 'id_content',
             }),
             'category': forms.Select(attrs={
                 'class': 'form-select'

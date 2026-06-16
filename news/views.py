@@ -446,3 +446,47 @@ def subscribe_tag(request, tag_id):
         'subscribed': subscribed,
         'subscriber_count': subscriber_count
     })
+
+
+@login_required
+def upload_editor_image(request):
+    """Editor.md 富文本编辑器图片上传接口"""
+    from django.views.decorators.clickjacking import xframe_options_sameorigin
+    from django.core.files.storage import default_storage
+    from django.core.files.base import ContentFile
+    import os
+
+    @xframe_options_sameorigin
+    def _handle_upload(request):
+        if request.method != 'POST':
+            return JsonResponse({'success': 0, 'message': '仅支持POST请求'})
+
+        file = request.FILES.get('editormd-image-file')
+        if not file:
+            return JsonResponse({'success': 0, 'message': '未找到上传文件'})
+
+        # 验证文件大小（≤5MB）
+        if file.size > 5 * 1024 * 1024:
+            return JsonResponse({'success': 0, 'message': '图片大小不能超过5MB'})
+
+        # 验证扩展名
+        ext = os.path.splitext(file.name)[1].lower().lstrip('.')
+        allowed = ['jpg', 'jpeg', 'gif', 'png', 'bmp', 'webp']
+        if ext not in allowed:
+            return JsonResponse({'success': 0, 'message': f'不支持的图片格式: {ext}'})
+
+        # 按日期组织存储目录
+        date_dir = timezone.now().strftime('%Y%m')
+        save_dir = os.path.join('editor_images', date_dir)
+
+        # 生成唯一文件名防止冲突
+        import uuid
+        filename = f'{uuid.uuid4().hex[:12]}_{timezone.now().strftime("%H%M%S")}{os.path.splitext(file.name)[1]}'
+        save_path = os.path.join(save_dir, filename)
+
+        saved_path = default_storage.save(save_path, ContentFile(file.read()))
+        url = default_storage.url(saved_path)
+
+        return JsonResponse({'success': 1, 'url': url, 'message': '上传成功'})
+
+    return _handle_upload(request)

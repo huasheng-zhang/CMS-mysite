@@ -1,6 +1,10 @@
 {% extends 'news/base.html' %}
 {% block title %}写文章{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/pandao/editor.md@1.5.0/css/editormd.min.css">
+{% endblock %}
+
 {% block content %}
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <span style="font-size:18px;font-weight:600;">写文章</span>
@@ -28,7 +32,10 @@
         <div class="form-group">
             <label>正文内容 <span style="color:var(--red)">*</span></label>
             {{ form.content }}
-            <div class="form-hint">支持纯文本，换行自动转换</div>
+            <!-- Editor.md 富文本编辑器容器 -->
+            <div id="editormd">
+                <textarea style="display:none;"></textarea>
+            </div>
             {% if form.content.errors %}<div class="form-error">{{ form.content.errors }}</div>{% endif %}
         </div>
         <div style="display:flex;gap:12px;">
@@ -76,8 +83,34 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/pandao/editor.md@1.5.0/editormd.min.js"></script>
 <script>
 $(document).ready(function() {
+    var editor = editormd("editormd", {
+        width: "100%",
+        height: 500,
+        path: "https://cdn.jsdelivr.net/gh/pandao/editor.md@1.5.0/lib/",
+        theme: "default",
+        previewTheme: "default",
+        editorTheme: "default",
+        markdown: "",
+        codeFold: true,
+        syncScrolling: "single",
+        saveHTMLToTextarea: true,
+        searchReplace: true,
+        emoji: false,
+        tocm: false,
+        imageUpload: true,
+        imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+        imageUploadURL: "{% url 'upload_editor_image' %}",
+        toolbarAutoFixed: true,
+        onchange: function() {
+            // 将编辑器HTML内容同步到隐藏的content字段
+            $('#id_content').val(editor.getHTML());
+        }
+    });
+
     $('#id_title').on('blur', function() {
         var slug = $('#id_slug');
         if (!slug.val()) {
@@ -85,6 +118,7 @@ $(document).ready(function() {
             slug.val(title.toLowerCase().replace(/[^\w\u4e00-\u9fff\s-]/g,'').replace(/[\s_]+/g,'-').replace(/^-+|-+$/g,'').substring(0,50));
         }
     });
+
     $('#id_image').on('change', function(e) {
         var file = e.target.files[0];
         if (file) {
@@ -93,7 +127,14 @@ $(document).ready(function() {
             reader.readAsDataURL(file);
         }
     });
-    $('#article-form').on('submit', function() { $('#submit-btn').prop('disabled', true).html('<span class="loading-spinner"></span> 发布中...'); });
+
+    // 表单提交前确保HTML内容已同步到hidden input
+    $('#article-form').on('submit', function() {
+        if (editor) {
+            $('#id_content').val(editor.getHTML());
+        }
+        $('#submit-btn').prop('disabled', true).html('<span class="loading-spinner"></span> 发布中...');
+    });
 });
 </script>
 {% endblock %}
