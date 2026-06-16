@@ -1,352 +1,76 @@
-<!-- templates/news/news_list.html -->
 {% extends 'news/base.html' %}
-
-{% block title %}新闻列表 - CMS新闻管理系统{% endblock %}
-
-{% block extra_css %}
-<style>
-    .list-thumb {
-        width: 100%;
-        height: 100%;
-        min-height: 180px;
-        overflow: hidden;
-        border-radius: 12px 0 0 12px;
-    }
-    .list-thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        transition: transform 0.3s ease;
-    }
-    @media (max-width: 768px) {
-        .list-thumb {
-            min-height: 160px;
-            border-radius: 12px 12px 0 0;
-        }
-    }
-
-    /* Article list card */
-    .article-list-card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--bg-card);
-        overflow: hidden;
-        transition: all 0.2s ease;
-        margin-bottom: 1rem;
-        box-shadow: var(--shadow-sm);
-    }
-    .article-list-card:hover {
-        box-shadow: var(--shadow-lg);
-        transform: translateY(-1px);
-    }
-    .article-list-card:hover .list-thumb img {
-        transform: scale(1.03);
-    }
-    .article-list-body {
-        padding: 1.25rem;
-    }
-    .article-list-title {
-        font-size: 1.0625rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        line-height: 1.5;
-    }
-    .article-list-title a {
-        color: var(--text-primary);
-        text-decoration: none;
-    }
-    .article-list-title a:hover {
-        color: var(--primary);
-    }
-    .article-list-excerpt {
-        font-size: 0.875rem;
-        color: var(--text-muted);
-        line-height: 1.6;
-        margin-bottom: 0.75rem;
-    }
-    .article-list-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    .article-list-stats {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    .article-list-stats span {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-
-    /* Search card */
-    .search-card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--bg-card);
-        box-shadow: var(--shadow);
-        margin-bottom: 1.5rem;
-    }
-    .search-card .card-body {
-        padding: 1.5rem;
-    }
-
-    /* Category sidebar */
-    .sidebar-category-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1.25rem;
-        border-bottom: 1px solid var(--border);
-        color: var(--text-secondary);
-        text-decoration: none;
-        transition: all 0.15s ease;
-        font-size: 0.9375rem;
-    }
-    .sidebar-category-item:last-child {
-        border-bottom: none;
-    }
-    .sidebar-category-item:hover {
-        background-color: rgba(79, 70, 229, 0.03);
-        color: var(--primary);
-    }
-    .sidebar-category-item.active-cat {
-        background-color: rgba(79, 70, 229, 0.06);
-        color: var(--primary);
-        font-weight: 600;
-    }
-    .sidebar-cat-dot {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        margin-right: 0.625rem;
-        flex-shrink: 0;
-    }
-    .sidebar-cat-count {
-        background: var(--bg-body);
-        color: var(--text-muted);
-        padding: 0.125rem 0.5rem;
-        border-radius: 10px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        min-width: 1.75rem;
-        text-align: center;
-    }
-    .active-cat .sidebar-cat-count {
-        background: var(--primary);
-        color: #fff;
-    }
-
-    /* Featured badge */
-    .featured-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        background: rgba(245, 158, 11, 0.12);
-        color: var(--warning);
-        padding: 0.2rem 0.5rem;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        margin-left: 0.375rem;
-    }
-    .category-pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.2rem 0.5rem;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: #fff;
-    }
-
-    /* CTA card */
-    .cta-card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: linear-gradient(135deg, rgba(79, 70, 229, 0.04), rgba(129, 140, 248, 0.04));
-        padding: 2rem;
-        text-align: center;
-    }
-    .cta-card i {
-        font-size: 2rem;
-        color: var(--primary);
-        margin-bottom: 0.75rem;
-    }
-</style>
-{% endblock %}
+{% block title %}新闻列表{% endblock %}
 
 {% block content %}
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="mb-0" style="font-size: 1.5rem;">
-                <i class="fas fa-list text-primary me-2" style="font-size:1.25rem"></i>新闻列表
-            </h2>
-            <span style="font-size: 0.875rem; color: var(--text-muted);">共 {{ page_obj.paginator.count }} 篇文章</span>
-        </div>
-
-        <!-- 搜索和筛选 -->
-        <div class="search-card">
-            <div class="card-body">
-                <form method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-7">
-                        <label class="form-label">搜索关键词</label>
-                        <input type="text" class="form-control" name="search" placeholder="输入标题、简介或内容关键词..." value="{{ search_query|default:'' }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">分类筛选</label>
-                        <select name="category" class="form-select">
-                            <option value="">全部分类</option>
-                            {% for category in categories %}
-                            <option value="{{ category.id }}" {% if current_category == category.id %}selected{% endif %}>
-                                {{ category.name }} ({{ category.article_count }})
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search"></i> 搜索
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 文章列表 -->
-        {% for article in page_obj %}
-        <div class="article-list-card">
-            <div class="row g-0">
-                {% if article.image %}
-                <div class="col-md-4">
-                    <div class="list-thumb">
-                        <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
-                    </div>
-                </div>
-                <div class="col-md-8">
-                {% else %}
-                <div class="col-md-12">
-                {% endif %}
-                    <div class="article-list-body">
-                        <div class="article-list-title">
-                            <a href="{% url 'news_detail' article.slug %}">
-                                {{ article.title }}
-                            </a>
-                            {% if article.is_featured %}
-                            <span class="featured-pill"><i class="fas fa-star"></i> 推荐</span>
-                            {% endif %}
-                        </div>
-                        <div class="article-list-excerpt">{{ article.intro|striptags|truncatewords:25 }}</div>
-                        <div class="article-list-meta">
-                            <span>
-                                <i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }} &middot;
-                                <i class="fas fa-calendar"></i> {{ article.publish_date|date:"Y-m-d H:i"|default:"未设定" }}
-                                {% if article.category %}
-                                &middot; <span class="category-pill" style="background-color: {{ article.category.color }};">{{ article.category.name }}</span>
-                                {% endif %}
-                            </span>
-                            <span class="article-list-stats">
-                                <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
-                                <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
-                                <span><i class="fas fa-comment"></i> {{ article.get_comment_count }}</span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="empty-state">
-            <i class="fas fa-search d-block"></i>
-            <h5>没有找到相关新闻</h5>
-            <p class="text-muted">尝试更换关键词或选择其他分类</p>
-            <a href="{% url 'news_list' %}" class="btn btn-outline-primary mt-2">查看全部新闻</a>
-        </div>
-        {% endfor %}
-
-        <!-- 分页 -->
-        {% if page_obj.has_other_pages %}
-        <nav aria-label="分页导航" class="mt-4 mb-2">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}">
-                        <i class="fas fa-angle-double-left"></i>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}">
-                        <i class="fas fa-angle-left"></i> 上一页
-                    </a>
-                </li>
-                {% endif %}
-
-                <li class="page-item active">
-                    <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-                </li>
-
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}">
-                        下一页 <i class="fas fa-angle-right"></i>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}">
-                        <i class="fas fa-angle-double-right"></i>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
-    </div>
-
-    <div class="col-lg-4">
-        <!-- 分类侧边栏 -->
-        <div class="sidebar-card mb-4" style="border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); box-shadow: var(--shadow); overflow: hidden;">
-            <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-folder text-primary"></i> 分类
-            </div>
-            <div>
-                <a href="{% url 'news_list' %}" class="sidebar-category-item {% if not current_category %}active-cat{% endif %}">
-                    <span style="display:flex;align-items:center">
-                        <span class="sidebar-cat-dot" style="background-color: var(--primary);"></span>
-                        全部新闻
-                    </span>
-                    <span class="sidebar-cat-count">{{ page_obj.paginator.count }}</span>
-                </a>
+<!-- Search and filter bar -->
+<div style="background:var(--white);margin-bottom:10px;">
+    <div class="filter-bar">
+        <form method="GET" style="display:flex;gap:10px;width:100%;align-items:center;">
+            <input type="text" name="search" placeholder="搜索标题或简介..." value="{{ search_query|default:'' }}">
+            <select name="category">
+                <option value="">全部分类</option>
                 {% for category in categories %}
-                <a href="{% url 'news_list' %}?category={{ category.id }}"
-                   class="sidebar-category-item {% if current_category == category.id %}active-cat{% endif %}">
-                    <span style="display:flex;align-items:center">
-                        <span class="sidebar-cat-dot" style="background-color: {{ category.color }};"></span>
-                        {{ category.name }}
-                    </span>
-                    <span class="sidebar-cat-count">{{ category.article_count }}</span>
-                </a>
+                <option value="{{ category.id }}" {% if current_category == category.id %}selected{% endif %}>{{ category.name }}</option>
                 {% endfor %}
-            </div>
-        </div>
-
-        <!-- 发布文章入口 -->
-        {% if user.is_authenticated %}
-        <div class="cta-card">
-            <i class="fas fa-pen-fancy d-block"></i>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem; font-weight: 500;">分享你的见解</p>
-            <a href="{% url 'create_news_article' %}" class="btn btn-primary">
-                <i class="fas fa-plus-circle"></i> 发布新文章
-            </a>
-        </div>
-        {% endif %}
+            </select>
+            <button type="submit" class="zhihu-btn-primary" style="padding:6px 16px;font-size:14px;"><i class="fas fa-search"></i> 搜索</button>
+        </form>
     </div>
 </div>
+
+<!-- Article feed list -->
+<div style="background:var(--white);margin-bottom:10px;">
+    {% for article in page_obj %}
+    <div class="feed-item">
+        {% if article.image %}
+        <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
+        {% endif %}
+        <div class="feed-item-title">
+            <a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a>
+            {% if article.is_featured %}
+            <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span>
+            {% endif %}
+        </div>
+        <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:25 }}</div>
+        <div class="feed-item-meta">
+            <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+            <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
+            {% if article.category %}
+            <span class="feed-item-category">{{ article.category.name }}</span>
+            {% endif %}
+            <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
+            <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
+            <span><i class="fas fa-comment"></i> {{ article.get_comment_count }}</span>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state"><i class="fas fa-search d-block"></i><p>没有找到相关新闻</p></div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="pagination-center">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link-zhihu"><i class="fas fa-angle-double-left"></i></a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link-zhihu">上一页</a>
+    {% endif %}
+    <span class="page-link-zhihu active">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link-zhihu">下一页</a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link-zhihu"><i class="fas fa-angle-double-right"></i></a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+{{ block.super }}
+{% if user.is_authenticated %}
+<div class="sidebar-card" style="text-align:center;padding:20px;">
+    <i class="fas fa-pen-fancy" style="font-size:24px;color:var(--blue);margin-bottom:8px;"></i>
+    <p style="font-size:14px;color:var(--text-3);margin-bottom:12px;">分享你的见解</p>
+    <a href="{% url 'create_news_article' %}" class="zhihu-btn-primary" style="font-size:14px;"><i class="fas fa-pen"></i> 写文章</a>
+</div>
+{% endif %}
 {% endblock %}

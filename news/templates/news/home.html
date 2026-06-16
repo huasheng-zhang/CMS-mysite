@@ -1,382 +1,77 @@
-<!-- templates/news/home.html -->
 {% extends 'news/base.html' %}
-
-{% block title %}CMS新闻管理系统 - 首页{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* Featured hero card */
-    .featured-hero {
-        position: relative;
-        border-radius: 16px;
-        overflow: hidden;
-        margin-bottom: 1.5rem;
-        box-shadow: var(--shadow-lg);
-    }
-    .featured-hero img {
-        width: 100%;
-        height: 380px;
-        object-fit: cover;
-        display: block;
-    }
-    @media (max-width: 768px) {
-        .featured-hero img {
-            height: 240px;
-        }
-    }
-    .featured-hero-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 2rem;
-        background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.5) 60%, transparent 100%);
-        color: #fff;
-    }
-    .featured-hero-overlay h4 {
-        color: #fff;
-        font-weight: 700;
-        margin-bottom: 0.625rem;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }
-    .featured-hero-overlay h4 a {
-        color: #fff;
-        text-decoration: none;
-    }
-    .featured-hero-overlay h4 a:hover {
-        color: var(--accent-light);
-    }
-    .featured-hero-meta {
-        font-size: 0.8125rem;
-        color: rgba(255,255,255,0.8);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-    .featured-hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        background: var(--accent);
-        color: var(--secondary);
-        padding: 0.25rem 0.625rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        position: absolute;
-        top: 16px;
-        right: 16px;
-    }
-
-    /* Latest article cards */
-    .article-card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
-        background: var(--bg-card);
-        transition: all 0.2s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    .article-card:hover {
-        box-shadow: var(--shadow-lg);
-        transform: translateY(-2px);
-    }
-    .article-card-img {
-        width: 100%;
-        height: 160px;
-        object-fit: cover;
-        display: block;
-    }
-    .article-card-body {
-        padding: 1.125rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    .article-card-title {
-        font-size: 0.9375rem;
-        font-weight: 600;
-        line-height: 1.5;
-        margin-bottom: 0.5rem;
-    }
-    .article-card-title a {
-        color: var(--text-primary);
-        text-decoration: none;
-    }
-    .article-card-title a:hover {
-        color: var(--primary);
-    }
-    .article-card-excerpt {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-        line-height: 1.6;
-        flex: 1;
-        margin-bottom: 0.75rem;
-    }
-    .article-card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-    }
-    .article-card-footer .btn-read {
-        color: var(--primary);
-        font-weight: 500;
-        font-size: 0.8125rem;
-        text-decoration: none;
-        padding: 0.25rem 0.625rem;
-        border-radius: 6px;
-        border: 1px solid var(--primary);
-        transition: all 0.2s ease;
-    }
-    .article-card-footer .btn-read:hover {
-        background-color: var(--primary);
-        color: #fff;
-    }
-
-    /* Category sidebar */
-    .category-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1.25rem;
-        border-bottom: 1px solid var(--border);
-        color: var(--text-secondary);
-        text-decoration: none;
-        transition: all 0.15s ease;
-        font-size: 0.9375rem;
-    }
-    .category-item:last-child {
-        border-bottom: none;
-    }
-    .category-item:hover {
-        background-color: rgba(79, 70, 229, 0.03);
-        color: var(--primary);
-    }
-    .category-dot {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        margin-right: 0.625rem;
-        flex-shrink: 0;
-    }
-    .category-name {
-        display: flex;
-        align-items: center;
-        font-weight: 500;
-    }
-    .category-count {
-        background: var(--bg-body);
-        color: var(--text-muted);
-        padding: 0.125rem 0.5rem;
-        border-radius: 10px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        min-width: 1.75rem;
-        text-align: center;
-    }
-
-    /* Popular articles numbered list */
-    .popular-item {
-        display: flex;
-        align-items: flex-start;
-        padding: 0.75rem 1.25rem;
-        border-bottom: 1px solid var(--border);
-        text-decoration: none;
-        color: var(--text-secondary);
-        transition: all 0.15s ease;
-        gap: 0.875rem;
-    }
-    .popular-item:last-child {
-        border-bottom: none;
-    }
-    .popular-item:hover {
-        background-color: rgba(79, 70, 229, 0.03);
-        color: var(--primary);
-    }
-    .popular-rank {
-        font-size: 1.125rem;
-        font-weight: 700;
-        color: var(--text-muted);
-        min-width: 1.5rem;
-        text-align: center;
-        line-height: 1.4;
-    }
-    .popular-item:nth-child(1) .popular-rank {
-        color: var(--primary);
-    }
-    .popular-item:nth-child(2) .popular-rank {
-        color: var(--primary-light);
-    }
-    .popular-item:nth-child(3) .popular-rank {
-        color: var(--accent);
-    }
-    .popular-info {
-        flex: 1;
-        min-width: 0;
-    }
-    .popular-title {
-        font-size: 0.875rem;
-        font-weight: 500;
-        line-height: 1.5;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-    }
-    .popular-meta {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        margin-top: 0.25rem;
-    }
-
-    /* Sidebar card */
-    .sidebar-card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--bg-card);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-    }
-    .sidebar-card-header {
-        padding: 1rem 1.25rem;
-        border-bottom: 1px solid var(--border);
-        font-size: 1rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .sidebar-card-header i {
-        color: var(--primary);
-    }
-</style>
-{% endblock %}
+{% block title %}新闻系统{% endblock %}
 
 {% block content %}
-<div class="row g-4">
-    <div class="col-lg-8">
-        <!-- 焦点新闻 -->
-        {% if featured_articles %}
-        <div class="mb-4">
-            <div class="section-heading">
-                <i class="fas fa-star"></i> 推荐新闻
-            </div>
-            {% for article in featured_articles %}
-            <div class="featured-hero">
-                {% if article.image %}
-                <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
-                {% else %}
-                <div style="width:100%;height:380px;background:linear-gradient(135deg, var(--primary-dark), var(--primary));"></div>
-                {% endif %}
-                <span class="featured-hero-badge"><i class="fas fa-star"></i> 推荐</span>
-                <div class="featured-hero-overlay">
-                    <h4>
-                        <a href="{% url 'news_detail' article.slug %}">
-                            {{ article.title }}
-                        </a>
-                    </h4>
-                    <div class="featured-hero-meta">
-                        <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
-                        <span><i class="fas fa-calendar"></i> {{ article.publish_date|date:"Y-m-d H:i"|default:"未设定" }}</span>
-                        <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
-                        <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+<!-- Featured articles - use feed-item style with a special highlight -->
+{% if featured_articles %}
+<div style="background:var(--white);margin-bottom:10px;">
+    <div style="padding:14px 20px;font-size:15px;font-weight:600;border-bottom:1px solid var(--divider);">
+        <i class="fas fa-star" style="color:var(--orange)"></i> 推荐
+    </div>
+    {% for article in featured_articles %}
+    <div class="feed-item">
+        {% if article.image %}
+        <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
         {% endif %}
+        <div class="feed-item-title">
+            <a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a>
+            <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span>
+        </div>
+        <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:30 }}</div>
+        <div class="feed-item-meta">
+            <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+            <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
+            <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
+            <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
-        <!-- 最新新闻 -->
-        <div class="mb-4">
-            <div class="section-heading">
-                <i class="fas fa-clock"></i> 最新新闻
-            </div>
-            {% if latest_articles %}
-            <div class="row g-3">
-                {% for article in latest_articles %}
-                <div class="col-md-6">
-                    <div class="article-card">
-                        {% if article.image %}
-                        <img src="{{ article.image.url }}" class="article-card-img" alt="{{ article.title }}" loading="lazy">
-                        {% endif %}
-                        <div class="article-card-body">
-                            <div class="article-card-title">
-                                <a href="{% url 'news_detail' article.slug %}">
-                                    {{ article.title }}
-                                </a>
-                            </div>
-                            <div class="article-card-excerpt">{{ article.intro|striptags|truncatewords:15 }}</div>
-                            <div class="article-card-footer">
-                                <span>
-                                    {{ article.author.username|default:"匿名" }} &middot;
-                                    {{ article.publish_date|date:"Y-m-d"|default:"--" }}
-                                </span>
-                                <a href="{% url 'news_detail' article.slug %}" class="btn-read">阅读</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <i class="fas fa-newspaper d-block"></i>
-                <p>暂无新闻文章</p>
-            </div>
+<!-- Latest articles - clean feed list -->
+<div style="background:var(--white);margin-bottom:10px;">
+    <div style="padding:14px 20px;font-size:15px;font-weight:600;border-bottom:1px solid var(--divider);">
+        <i class="fas fa-clock" style="color:var(--blue)"></i> 最新
+    </div>
+    {% for article in latest_articles %}
+    <div class="feed-item">
+        {% if article.image %}
+        <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
+        {% endif %}
+        <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a></div>
+        <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:20 }}</div>
+        <div class="feed-item-meta">
+            <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+            <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
+            {% if article.category %}
+            <span class="feed-item-category">{{ article.category.name }}</span>
             {% endif %}
         </div>
     </div>
+    {% empty %}
+    <div class="empty-state"><i class="fas fa-newspaper d-block"></i><p>暂无新闻</p></div>
+    {% endfor %}
+</div>
+{% endblock %}
 
-    <div class="col-lg-4">
-        <!-- 分类导航 -->
-        <div class="sidebar-card mb-4">
-            <div class="sidebar-card-header">
-                <i class="fas fa-layer-group"></i> 新闻分类
-            </div>
-            <div>
-                {% for category in categories %}
-                <a href="{% url 'news_list' %}?category={{ category.id }}" class="category-item">
-                    <span class="category-name">
-                        <span class="category-dot" style="background-color: {{ category.color }};"></span>
-                        {{ category.name }}
-                    </span>
-                    <span class="category-count">{{ category.article_count }}</span>
-                </a>
-                {% empty %}
-                <div class="category-item" style="color: var(--text-muted);">暂无分类</div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- 热门文章 -->
-        <div class="sidebar-card">
-            <div class="sidebar-card-header">
-                <i class="fas fa-fire"></i> 热门文章
-            </div>
-            <div>
-                {% for article in popular_articles %}
-                <a href="{% url 'news_detail' article.slug %}" class="popular-item">
-                    <span class="popular-rank">{{ forloop.counter }}</span>
-                    <div class="popular-info">
-                        <div class="popular-title">{{ article.title }}</div>
-                        <div class="popular-meta">
-                            <i class="fas fa-eye"></i> {{ article.get_read_count }}
-                        </div>
-                    </div>
-                </a>
-                {% empty %}
-                <div class="category-item" style="color: var(--text-muted);">暂无数据</div>
-                {% endfor %}
-            </div>
-        </div>
+{% block sidebar %}
+<!-- Categories - default sidebar already provided in base.html, just add hot articles -->
+{{ block.super }}
+<!-- Hot articles -->
+<div class="sidebar-card">
+    <div class="sidebar-card-header"><i class="fas fa-fire"></i> 热门</div>
+    <div class="sidebar-card-body">
+        {% for article in popular_articles %}
+        <a href="{% url 'news_detail' article.slug %}" class="sidebar-list-item">
+            <span style="display:flex;align-items:center;gap:10px;">
+                <span class="hot-rank {% if forloop.counter <= 3 %}hot-rank-{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</span>
+                <span>{{ article.title|truncatechars:28 }}</span>
+            </span>
+        </a>
+        {% empty %}
+        <div class="sidebar-list-item" style="color:var(--text-4)">暂无数据</div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

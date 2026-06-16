@@ -1,673 +1,137 @@
-<!-- templates/news/news_detail.html -->
 {% extends 'news/base.html' %}
-
-{% block title %}{{ article.title }} - CMS新闻管理系统{% endblock %}
-
-{% block extra_css %}
-<style>
-    .article-header {
-        border-bottom: 2px solid var(--border);
-        padding-bottom: 1.25rem;
-        margin-bottom: 1.75rem;
-    }
-    .article-title {
-        font-size: 2rem;
-        font-weight: 700;
-        letter-spacing: -0.025em;
-        line-height: 1.3;
-        color: var(--text-primary);
-        margin-bottom: 0.75rem;
-    }
-    @media (max-width: 768px) {
-        .article-title {
-            font-size: 1.5rem;
-        }
-    }
-    .article-badges {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.75rem;
-    }
-    .article-cat-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.3rem 0.75rem;
-        border-radius: 8px;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        color: #fff;
-    }
-    .article-featured-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        background: rgba(245, 158, 11, 0.12);
-        color: var(--warning);
-        padding: 0.3rem 0.75rem;
-        border-radius: 8px;
-        font-size: 0.8125rem;
-        font-weight: 600;
-    }
-    .article-meta {
-        color: var(--text-muted);
-        font-size: 0.875rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    .article-meta span {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-    }
-
-    /* Article cover */
-    .article-cover {
-        width: 100%;
-        max-height: 420px;
-        overflow: hidden;
-        border-radius: 12px;
-        box-shadow: var(--shadow-md);
-    }
-    .article-cover img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-    @media (max-width: 768px) {
-        .article-cover {
-            max-height: 240px;
-        }
-    }
-
-    /* Article content typography */
-    .article-text-content {
-        font-size: 1.0625rem;
-        line-height: 1.85;
-        color: var(--text-secondary);
-        max-width: 100%;
-        overflow-wrap: break-word;
-        word-wrap: break-word;
-    }
-    .article-text-content p {
-        margin-bottom: 1.25rem;
-    }
-    .article-text-content h1, .article-text-content h2, .article-text-content h3,
-    .article-text-content h4, .article-text-content h5, .article-text-content h6 {
-        color: var(--text-primary);
-        margin-top: 2rem;
-        margin-bottom: 0.875rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-    }
-    .article-text-content h2 {
-        font-size: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid var(--border);
-    }
-    .article-text-content h3 {
-        font-size: 1.25rem;
-    }
-    .article-text-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: var(--shadow);
-        margin: 1.25rem 0;
-    }
-    .article-text-content table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 1.25rem 0;
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-    }
-    .article-text-content table th, .article-text-content table td {
-        border: 1px solid var(--border);
-        padding: 0.625rem 0.875rem;
-        white-space: nowrap;
-    }
-    .article-text-content table thead th {
-        background: var(--bg-body);
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-    .article-text-content table tbody tr:nth-child(even) {
-        background: #f8fafc;
-    }
-    .article-text-content blockquote {
-        border-left: 4px solid var(--primary);
-        padding: 1rem 1.25rem;
-        margin: 1.5rem 0;
-        background: rgba(79, 70, 229, 0.03);
-        border-radius: 0 8px 8px 0;
-        font-style: italic;
-        color: var(--text-secondary);
-    }
-    .article-text-content ul, .article-text-content ol {
-        padding-left: 1.5rem;
-        margin-bottom: 1.25rem;
-    }
-    .article-text-content li {
-        margin-bottom: 0.375rem;
-    }
-    .article-text-content pre {
-        background: #1e293b;
-        color: #e2e8f0;
-        border-radius: 10px;
-        padding: 1.25rem;
-        overflow-x: auto;
-        font-size: 0.875rem;
-        line-height: 1.7;
-        margin: 1.25rem 0;
-    }
-    .article-text-content code {
-        background: rgba(79, 70, 229, 0.08);
-        color: var(--primary-dark);
-        border-radius: 4px;
-        padding: 0.15em 0.4em;
-        font-size: 0.875em;
-    }
-    .article-text-content pre code {
-        padding: 0;
-        background: none;
-        color: inherit;
-        border-radius: 0;
-    }
-    .article-text-content hr {
-        border: none;
-        border-top: 1px solid var(--border);
-        margin: 2rem 0;
-    }
-    .article-text-content a {
-        color: var(--primary);
-        text-decoration: none;
-        border-bottom: 1px solid transparent;
-        transition: border-color 0.2s ease;
-    }
-    .article-text-content a:hover {
-        border-bottom-color: var(--primary);
-    }
-
-    /* Wagtail body StreamField content */
-    .article-content {
-        font-size: 1.0625rem;
-        line-height: 1.85;
-        color: var(--text-secondary);
-        max-width: 100%;
-        overflow-wrap: break-word;
-        word-wrap: break-word;
-    }
-    .article-content p {
-        margin-bottom: 1.25rem;
-    }
-    .article-content h1, .article-content h2, .article-content h3,
-    .article-content h4, .article-content h5, .article-content h6 {
-        color: var(--text-primary);
-        margin-top: 2rem;
-        margin-bottom: 0.875rem;
-        font-weight: 700;
-    }
-    .article-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: var(--shadow);
-        margin: 1.25rem 0;
-    }
-    .article-content blockquote {
-        border-left: 4px solid var(--primary);
-        padding: 1rem 1.25rem;
-        margin: 1.5rem 0;
-        background: rgba(79, 70, 229, 0.03);
-        border-radius: 0 8px 8px 0;
-        font-style: italic;
-    }
-    .article-content pre {
-        background: #1e293b;
-        color: #e2e8f0;
-        border-radius: 10px;
-        padding: 1.25rem;
-        overflow-x: auto;
-        font-size: 0.875rem;
-        margin: 1.25rem 0;
-    }
-    .article-content code {
-        background: rgba(79, 70, 229, 0.08);
-        color: var(--primary-dark);
-        border-radius: 4px;
-        padding: 0.15em 0.4em;
-        font-size: 0.875em;
-    }
-    .article-content pre code {
-        padding: 0;
-        background: none;
-        color: inherit;
-    }
-    .article-content a {
-        color: var(--primary);
-        text-decoration: none;
-    }
-    .article-content a:hover {
-        text-decoration: underline;
-    }
-
-    /* Tags */
-    .tag-pill {
-        display: inline-flex;
-        align-items: center;
-        background: var(--bg-body);
-        color: var(--text-secondary);
-        padding: 0.375rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        margin-right: 0.375rem;
-        margin-bottom: 0.375rem;
-        border: 1px solid var(--border);
-        transition: all 0.15s ease;
-    }
-    .tag-pill:hover {
-        background: rgba(79, 70, 229, 0.06);
-        color: var(--primary);
-        border-color: var(--primary-light);
-    }
-
-    /* Share buttons */
-    .share-buttons {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .share-label {
-        font-size: 0.875rem;
-        color: var(--text-muted);
-        font-weight: 500;
-    }
-    .share-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.875rem;
-        border-radius: 20px;
-        background: var(--bg-body);
-        color: var(--text-secondary);
-        font-size: 0.8125rem;
-        font-weight: 500;
-        text-decoration: none;
-        border: 1px solid var(--border);
-        transition: all 0.2s ease;
-    }
-    .share-btn:hover {
-        background: var(--primary);
-        color: #fff;
-        border-color: var(--primary);
-    }
-
-    /* Like / edit buttons */
-    .action-bar {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--bg-card);
-        box-shadow: var(--shadow);
-        padding: 1rem 1.25rem;
-    }
-    .like-btn {
-        border-radius: 8px;
-        padding: 0.5rem 1.25rem;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-    }
-
-    /* Comment form */
-    .comment-form-area {
-        background: var(--bg-body);
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid var(--border);
-    }
-    .comment-box {
-        border-left: 3px solid var(--primary);
-        padding: 0.875rem 1rem;
-        margin-bottom: 1rem;
-        background: rgba(79, 70, 229, 0.02);
-        border-radius: 0 8px 8px 0;
-        transition: background 0.15s ease;
-    }
-    .comment-box:hover {
-        background: rgba(79, 70, 229, 0.04);
-    }
-    .comment-author {
-        font-weight: 600;
-        font-size: 0.9375rem;
-        color: var(--text-primary);
-    }
-    .comment-date {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-    }
-    .comment-text {
-        font-size: 0.9375rem;
-        color: var(--text-secondary);
-        margin-top: 0.375rem;
-        margin-bottom: 0;
-    }
-
-    /* Sidebar cards */
-    .detail-sidebar-card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--bg-card);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-    }
-    .detail-sidebar-header {
-        padding: 1rem 1.25rem;
-        border-bottom: 1px solid var(--border);
-        font-weight: 600;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .detail-sidebar-header i {
-        color: var(--primary);
-    }
-
-    /* Related articles */
-    .related-item {
-        display: block;
-        padding: 0.875rem 1.25rem;
-        border-bottom: 1px solid var(--border);
-        text-decoration: none;
-        color: var(--text-secondary);
-        transition: all 0.15s ease;
-    }
-    .related-item:last-child {
-        border-bottom: none;
-    }
-    .related-item:hover {
-        background-color: rgba(79, 70, 229, 0.03);
-        color: var(--primary);
-    }
-    .related-title {
-        font-size: 0.9375rem;
-        font-weight: 500;
-        margin-bottom: 0.25rem;
-        line-height: 1.5;
-    }
-    .related-meta {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-    }
-
-    /* Statistics */
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border);
-    }
-    .stat-item:last-child {
-        border-bottom: none;
-    }
-    .stat-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.875rem;
-        flex-shrink: 0;
-    }
-    .stat-label {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-    }
-    .stat-value {
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-
-    .article-col {
-        overflow: hidden;
-        min-width: 0;
-    }
-</style>
-{% endblock %}
+{% block title %}{{ article.title }}{% endblock %}
 
 {% block content %}
-<div class="row g-4">
-    <div class="col-lg-8 article-col">
-        <!-- 文章详情 -->
-        <article>
-            <div class="article-header">
-                <h1 class="article-title">{{ article.title }}</h1>
-
-                <div class="article-badges">
-                    {% if article.category %}
-                    <span class="article-cat-badge" style="background-color: {{ article.category.color }};">
-                        {{ article.category.name }}
-                    </span>
-                    {% endif %}
-                    {% if article.is_featured %}
-                    <span class="article-featured-badge"><i class="fas fa-star"></i> 推荐</span>
-                    {% endif %}
-                </div>
-
-                <div class="article-meta">
-                    <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
-                    <span><i class="fas fa-calendar"></i> {{ article.publish_date|date:"Y-m-d H:i"|default:"未设定" }}</span>
-                    <span><i class="fas fa-eye"></i> {{ article.get_read_count }} 阅读</span>
-                    <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }} 点赞</span>
-                    <span><i class="fas fa-comment"></i> {{ article.get_comment_count }} 评论</span>
-                </div>
-            </div>
-
-            {% if article.image %}
-            <div class="article-cover mb-4">
-                <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
-            </div>
+<!-- Article page -->
+<div class="article-page">
+    <!-- Header with title and meta -->
+    <div class="article-header">
+        <h1 class="article-title">{{ article.title }}</h1>
+        <div class="article-meta-bar">
+            {% if article.category %}
+            <span class="feed-item-category">{{ article.category.name }}</span>
             {% endif %}
-
-            <div class="article-content">
-                {% if article.content %}
-                    <div class="article-text-content">{{ article.content|safe }}</div>
-                {% endif %}
-
-                {% if article.body %}
-                    {% for block in article.body %}
-                        {% if block.block_type == 'heading' %}
-                            <h2>{{ block.value }}</h2>
-                        {% elif block.block_type == 'paragraph' %}
-                            {{ block.value }}
-                        {% elif block.block_type == 'image' %}
-                            <figure class="figure my-3">
-                                {% load wagtailimages_tags %}
-                                {% image block.value width-800 class="figure-img img-fluid rounded" %}
-                            </figure>
-                        {% elif block.block_type == 'video' %}
-                            <div class="ratio ratio-16x9 my-3">
-                                {{ block.value|safe }}
-                            </div>
-                        {% elif block.block_type == 'html_content' %}
-                            {{ block.value|safe }}
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <!-- 标签 -->
-            <div class="mt-4 mb-3">
-                <i class="fas fa-tags text-muted me-1"></i>
-                {% for tag in article.tags.all %}
-                    <span class="tag-pill">{{ tag.name }}</span>
-                {% empty %}
-                    <span style="font-size: 0.875rem; color: var(--text-muted);">暂无标签</span>
-                {% endfor %}
-            </div>
-
-            <!-- 分享 -->
-            {% if article.allow_sharing %}
-            <div class="share-buttons mb-4">
-                <span class="share-label">分享到：</span>
-                <a href="javascript:void(0)" onclick="shareToWeibo()" class="share-btn" title="分享到微博"><i class="fab fa-weibo"></i> 微博</a>
-                <a href="javascript:void(0)" onclick="copyLink()" class="share-btn" title="复制链接"><i class="fas fa-link"></i> 复制链接</a>
-            </div>
+            {% if article.is_featured %}
+            <span class="feed-item-badge">推荐</span>
             {% endif %}
-        </article>
-
-        <!-- 互动功能 -->
-        <div class="action-bar mt-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    {% if article.allow_likes %}
-                    <button id="like-btn" class="btn like-btn {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %}"
-                            data-slug="{{ article.slug }}" {% if not user.is_authenticated %}disabled title="请先登录"{% endif %}>
-                        <i class="fas fa-thumbs-up"></i>
-                        <span id="like-count">{{ article.get_like_count }}</span> 点赞
-                    </button>
-                    {% endif %}
-
-                    {% if user.is_authenticated and user == article.author or user.is_staff %}
-                    <a href="{% url 'edit_news_article' article.slug %}" class="btn btn-outline-primary like-btn">
-                        <i class="fas fa-edit"></i> 编辑
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- 评论区域 -->
-        <div class="detail-sidebar-card mt-4">
-            <div class="detail-sidebar-header">
-                <i class="fas fa-comments"></i> 评论 (<span id="comment-count">{{ article.get_comment_count }}</span>)
-            </div>
-            <div class="card-body">
-                {% if user.is_authenticated %}
-                {% if article.allow_comments %}
-                <div class="comment-form-area mb-4">
-                    <form id="comment-form">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <textarea class="form-control" id="comment-content" rows="3"
-                                      placeholder="写下您的评论...（至少2个字符）" maxlength="1000"
-                                      style="border-radius: 10px;"></textarea>
-                            <div class="form-text text-end">
-                                <span id="char-count">0</span>/1000
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" id="submit-comment-btn">
-                            <i class="fas fa-paper-plane"></i> 发表评论
-                        </button>
-                    </form>
-                </div>
-                {% else %}
-                <div class="alert alert-secondary">该文章已关闭评论功能。</div>
-                {% endif %}
-                {% else %}
-                <div class="alert alert-info">
-                    请 <a href="{% url 'internal_auth:login' %}" style="color: var(--primary); font-weight: 500;">登录</a> 后发表评论。
-                </div>
-                {% endif %}
-
-                <div id="comments-section">
-                    {% for comment in comments %}
-                    <div class="comment-box" id="comment-{{ comment.id }}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="comment-author"><i class="fas fa-user-circle me-1" style="color: var(--text-muted);"></i> {{ comment.user.username }}</span>
-                            <span class="comment-date">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
-                        </div>
-                        <p class="comment-text">{{ comment.content }}</p>
-                    </div>
-                    {% empty %}
-                    <div id="no-comments" class="text-center py-4" style="color: var(--text-muted);">
-                        <i class="fas fa-comment-dots fa-2x mb-2 d-block" style="opacity: 0.5;"></i>
-                        <p>暂无评论，快来抢沙发吧！</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+            <span class="author-name">{{ article.author.username|default:"匿名" }}</span>
+            <span>{{ article.publish_date|date:"Y-m-d H:i"|default:"未设定" }}</span>
+            <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
+            <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
+            <span><i class="fas fa-comment"></i> {{ article.get_comment_count }}</span>
         </div>
     </div>
 
-    <div class="col-lg-4">
-        <!-- 相关文章 -->
-        <div class="detail-sidebar-card mb-4">
-            <div class="detail-sidebar-header">
-                <i class="fas fa-sync-alt"></i> 相关文章
-            </div>
-            <div>
-                {% for related in related_articles %}
-                <a href="{% url 'news_detail' related.slug %}" class="related-item">
-                    <div class="related-title">{{ related.title|truncatechars:35 }}</div>
-                    <div class="related-meta">
-                        {{ related.publish_date|date:"Y-m-d"|default:"--" }} &middot;
-                        <i class="fas fa-eye"></i> {{ related.get_read_count }}
-                    </div>
-                </a>
-                {% empty %}
-                <div class="related-item" style="color: var(--text-muted);">暂无相关文章</div>
-                {% endfor %}
-            </div>
-        </div>
+    {% if article.image %}
+    <div class="article-cover"><img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy"></div>
+    {% endif %}
 
-        <!-- 统计信息 -->
-        <div class="detail-sidebar-card">
-            <div class="detail-sidebar-header">
-                <i class="fas fa-chart-bar"></i> 文章统计
+    <div class="article-body">
+        {% if article.content %}
+        <div class="article-text-content">{{ article.content|safe }}</div>
+        {% endif %}
+        {% if article.body %}
+        {% for block in article.body %}
+            {% if block.block_type == 'heading' %}<h2>{{ block.value }}</h2>
+            {% elif block.block_type == 'paragraph' %}{{ block.value }}
+            {% elif block.block_type == 'image' %}
+                {% load wagtailimages_tags %}
+                <figure style="margin:1em 0">{% image block.value width-800 class="img-fluid rounded" %}</figure>
+            {% elif block.block_type == 'video' %}
+                <div class="ratio ratio-16x9" style="margin:1em 0">{{ block.value|safe }}</div>
+            {% elif block.block_type == 'html_content' %}{{ block.value|safe }}
+            {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Tags -->
+    <div class="article-tags">
+        {% for tag in article.tags.all %}
+        <a href="{% url 'news_list' %}?search={{ tag.name }}" class="article-tag">{{ tag.name }}</a>
+        {% empty %}
+        <span style="font-size:13px;color:var(--text-4)">暂无标签</span>
+        {% endfor %}
+    </div>
+
+    <!-- Actions: upvote + edit -->
+    <div class="article-actions">
+        {% if article.allow_likes %}
+        <button id="like-btn" class="vote-btn vote-btn-up {% if user_liked %}active{% endif %}" data-slug="{{ article.slug }}" {% if not user.is_authenticated %}disabled title="请先登录"{% endif %}>
+            <i class="fas fa-caret-up"></i> <span id="like-count">{{ article.get_like_count }}</span> 赞同
+        </button>
+        {% endif %}
+        {% if article.allow_sharing %}
+        <button onclick="shareToWeibo()" class="zhihu-btn-ghost"><i class="fas fa-share-alt"></i> 分享</button>
+        <button onclick="copyLink()" class="zhihu-btn-ghost"><i class="fas fa-link"></i> 复制链接</button>
+        {% endif %}
+        {% if user.is_authenticated and user == article.author or user.is_staff %}
+        <a href="{% url 'edit_news_article' article.slug %}" class="zhihu-btn-ghost"><i class="fas fa-edit"></i> 编辑</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Comments -->
+<div class="comment-section">
+    <div class="comment-section-header"><i class="fas fa-comments" style="color:var(--blue)"></i> 评论 <span id="comment-count">{{ article.get_comment_count }}</span></div>
+    {% if user.is_authenticated %}
+    {% if article.allow_comments %}
+    <div class="comment-input-area">
+        <form id="comment-form">
+            {% csrf_token %}
+            <textarea id="comment-content" rows="3" placeholder="写下你的评论...（至少2个字符）" maxlength="1000"></textarea>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;">
+                <span style="font-size:12px;color:var(--text-4)"><span id="char-count">0</span>/1000</span>
+                <button type="submit" class="zhihu-btn-primary" id="submit-comment-btn" style="font-size:14px;padding:6px 16px;"><i class="fas fa-paper-plane"></i> 发布</button>
             </div>
-            <div class="card-body">
-                <div class="stat-item">
-                    <div class="stat-icon" style="background: rgba(79, 70, 229, 0.08); color: var(--primary);">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <div>
-                        <div class="stat-label">阅读量</div>
-                        <div class="stat-value">{{ article.get_read_count }}</div>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon" style="background: rgba(220, 38, 38, 0.08); color: var(--danger);">
-                        <i class="fas fa-thumbs-up"></i>
-                    </div>
-                    <div>
-                        <div class="stat-label">点赞数</div>
-                        <div class="stat-value">{{ article.get_like_count }}</div>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon" style="background: rgba(5, 150, 105, 0.08); color: var(--success);">
-                        <i class="fas fa-comment"></i>
-                    </div>
-                    <div>
-                        <div class="stat-label">评论数</div>
-                        <div class="stat-value">{{ article.get_comment_count }}</div>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.08); color: var(--accent);">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div>
-                        <div class="stat-label">发布时间</div>
-                        <div class="stat-value" style="font-size: 0.875rem;">{{ article.publish_date|date:"Y-m-d H:i"|default:"未设定" }}</div>
-                    </div>
-                </div>
-            </div>
+        </form>
+    </div>
+    {% else %}
+    <div style="padding:16px 20px;font-size:14px;color:var(--text-3)">该文章已关闭评论</div>
+    {% endif %}
+    {% else %}
+    <div style="padding:16px 20px;font-size:14px;color:var(--text-3)">请 <a href="{% url 'internal_auth:login' %}">登录</a> 后发表评论</div>
+    {% endif %}
+
+    <div id="comments-section">
+        {% for comment in comments %}
+        <div class="comment-item" id="comment-{{ comment.id }}">
+            <span class="comment-author">{{ comment.user.username }}</span>
+            <span class="comment-time">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+            <div class="comment-content">{{ comment.content }}</div>
+        </div>
+        {% empty %}
+        <div id="no-comments" class="empty-state" style="padding:32px 20px;"><p style="font-size:14px">暂无评论，快来抢沙发</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+{{ block.super }}
+<!-- Related articles -->
+<div class="sidebar-card">
+    <div class="sidebar-card-header"><i class="fas fa-sync-alt"></i> 相关文章</div>
+    <div class="sidebar-card-body">
+        {% for related in related_articles %}
+        <a href="{% url 'news_detail' related.slug %}" class="sidebar-list-item">
+            <span>{{ related.title|truncatechars:30 }}</span>
+            <span class="sidebar-count"><i class="fas fa-eye"></i> {{ related.get_read_count }}</span>
+        </a>
+        {% empty %}
+        <div class="sidebar-list-item" style="color:var(--text-4)">暂无相关</div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="sidebar-card">
+    <div class="sidebar-card-header"><i class="fas fa-chart-bar"></i> 统计</div>
+    <div class="sidebar-card-body" style="padding:14px 16px;">
+        <div style="font-size:14px;color:var(--text-2);display:flex;flex-direction:column;gap:8px;">
+            <span><i class="fas fa-eye" style="color:var(--blue);width:18px;"></i> 阅读量 <strong>{{ article.get_read_count }}</strong></span>
+            <span><i class="fas fa-thumbs-up" style="color:var(--red);width:18px;"></i> 点赞数 <strong>{{ article.get_like_count }}</strong></span>
+            <span><i class="fas fa-comment" style="color:var(--green);width:18px;"></i> 评论数 <strong>{{ article.get_comment_count }}</strong></span>
         </div>
     </div>
 </div>
@@ -676,146 +140,82 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-    // 评论字数统计
     $('#comment-content').on('input', function() {
         var len = $(this).val().length;
         $('#char-count').text(len);
-        if (len > 900) {
-            $('#char-count').addClass('text-danger');
-        } else {
-            $('#char-count').removeClass('text-danger');
-        }
+        if (len > 900) $('#char-count').css('color','var(--red)');
+        else $('#char-count').css('color','');
     });
 
-    // 点赞功能
     $('#like-btn').click(function() {
-        var $btn = $(this);
-        var $countSpan = $('#like-count');
-        var originalHtml = $btn.html();
-
+        var $btn = $(this), $count = $('#like-count');
         $btn.prop('disabled', true).html('<span class="loading-spinner"></span>');
-
         $.ajax({
             url: '{% url "like_article" article.slug %}',
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCookie('csrftoken') },
-            success: function(response) {
-                if (response.liked) {
-                    $btn.removeClass('btn-outline-danger').addClass('btn-danger');
-                } else {
-                    $btn.removeClass('btn-danger').addClass('btn-outline-danger');
-                }
-                $countSpan.text(response.like_count);
+            method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            success: function(r) {
+                if (r.liked) $btn.addClass('active');
+                else $btn.removeClass('active');
+                $count.text(r.like_count);
             },
-            error: function() {
-                showToast('操作失败，请稍后重试', 'danger');
-            },
+            error: function() { showToast('操作失败', 'danger'); },
             complete: function() {
-                $btn.prop('disabled', false).html(
-                    '<i class="fas fa-thumbs-up"></i> <span id="like-count">' +
-                    $countSpan.text() + '</span> 点赞'
-                );
+                $btn.prop('disabled', false).html('<i class="fas fa-caret-up"></i> <span id="like-count">' + $count.text() + '</span> 赞同');
+                if ($btn.hasClass('active')) $btn.html('<i class="fas fa-caret-up"></i> <span id="like-count">' + $count.text() + '</span> 已赞同');
             }
         });
     });
 
-    // 提交评论
     $('#comment-form').submit(function(e) {
         e.preventDefault();
         var content = $('#comment-content').val().trim();
-        if (content.length < 2) {
-            showToast('评论内容至少2个字符', 'warning');
-            return;
-        }
-
-        var $submitBtn = $('#submit-comment-btn');
-        $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> 发送中...');
-
+        if (content.length < 2) { showToast('评论至少2个字符', 'warning'); return; }
+        var $btn = $('#submit-comment-btn');
+        $btn.prop('disabled', true).html('<span class="loading-spinner"></span> 发送中...');
         $.ajax({
             url: '{% url "add_comment" article.slug %}',
             method: 'POST',
-            data: {
-                'content': content,
-                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
-            },
-            success: function(response) {
-                if (response.success) {
-                    // 移除"暂无评论"提示
+            data: { 'content': content, 'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val() },
+            success: function(r) {
+                if (r.success) {
                     $('#no-comments').remove();
-
-                    // 使用 escapeHtml 防止 XSS
-                    var commentHtml =
-                        '<div class="comment-box" id="comment-' + response.comment.id + '">' +
-                            '<div class="d-flex justify-content-between align-items-center">' +
-                                '<span class="comment-author"><i class="fas fa-user-circle me-1" style="color: var(--text-muted);"></i> ' +
-                                escapeHtml(response.comment.author) + '</span>' +
-                                '<span class="comment-date">' + escapeHtml(response.comment.created_at) + '</span>' +
-                            '</div>' +
-                            '<p class="comment-text">' + escapeHtml(response.comment.content) + '</p>' +
-                        '</div>';
-                    $('#comments-section').prepend(commentHtml);
+                    var html = '<div class="comment-item" id="comment-' + r.comment.id + '">' +
+                        '<span class="comment-author">' + escapeHtml(r.comment.author) + '</span>' +
+                        '<span class="comment-time">' + escapeHtml(r.comment.created_at) + '</span>' +
+                        '<div class="comment-content">' + escapeHtml(r.comment.content) + '</div></div>';
+                    $('#comments-section').prepend(html);
                     $('#comment-content').val('');
                     $('#char-count').text('0');
-
-                    // 更新评论计数
-                    if (response.comment_count !== undefined) {
-                        $('#comment-count').text(response.comment_count);
-                    }
-
-                    showToast('评论发表成功！', 'success');
-                } else {
-                    showToast(response.error || '评论发表失败', 'danger');
-                }
+                    if (r.comment_count !== undefined) $('#comment-count').text(r.comment_count);
+                    showToast('评论成功', 'success');
+                } else { showToast(r.error || '评论失败', 'danger'); }
             },
             error: function(xhr) {
-                var msg = '评论发表失败，请稍后重试';
-                if (xhr.responseJSON && xhr.responseJSON.error) {
-                    msg = xhr.responseJSON.error;
-                }
+                var msg = xhr.responseJSON ? xhr.responseJSON.error : '评论失败';
                 showToast(msg, 'danger');
             },
-            complete: function() {
-                $submitBtn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 发表评论');
-            }
+            complete: function() { $btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 发布'); }
         });
     });
 });
 
-// Toast 提示
 function showToast(message, type) {
     type = type || 'info';
-    var iconMap = {
-        'success': 'fas fa-check-circle',
-        'danger': 'fas fa-exclamation-circle',
-        'warning': 'fas fa-exclamation-triangle',
-        'info': 'fas fa-info-circle'
-    };
-    var toastHtml =
-        '<div class="toast show align-items-center text-bg-' + type + ' border-0" role="alert">' +
-            '<div class="d-flex">' +
-                '<div class="toast-body"><i class="' + (iconMap[type] || iconMap['info']) + '"></i> ' + message + '</div>' +
-                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
-            '</div>' +
-        '</div>';
-    $('.toast-container').append(toastHtml);
-    setTimeout(function() {
-        $('.toast-container .toast:last').fadeOut(300, function() { $(this).remove(); });
-    }, 3000);
+    var icons = { success:'fas fa-check-circle', danger:'fas fa-exclamation-circle', warning:'fas fa-exclamation-triangle', info:'fas fa-info-circle' };
+    var html = '<div class="toast show align-items-center text-bg-' + type + ' border-0" role="alert">' +
+        '<div class="d-flex"><div class="toast-body"><i class="' + (icons[type]||icons.info) + '"></i> ' + message + '</div>' +
+        '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>';
+    $('.toast-container').append(html);
+    setTimeout(function() { $('.toast-container .toast:last').fadeOut(300, function() { $(this).remove(); }); }, 3000);
 }
 
-// 分享功能
 function shareToWeibo() {
-    var url = encodeURIComponent(window.location.href);
-    var title = encodeURIComponent(document.title);
+    var url = encodeURIComponent(window.location.href), title = encodeURIComponent(document.title);
     window.open('http://service.weibo.com/share/share.php?url=' + url + '&title=' + title, '_blank');
 }
-
 function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(function() {
-        showToast('链接已复制到剪贴板', 'success');
-    }).catch(function() {
-        showToast('复制失败，请手动复制地址栏链接', 'warning');
-    });
+    navigator.clipboard.writeText(window.location.href).then(function() { showToast('链接已复制', 'success'); })
+    .catch(function() { showToast('复制失败', 'warning'); });
 }
 </script>
 {% endblock %}
