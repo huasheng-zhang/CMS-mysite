@@ -242,8 +242,21 @@ function shareToWeibo() {
     window.open('http://service.weibo.com/share/share.php?url=' + url + '&title=' + title, '_blank');
 }
 function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(function() { showToast('链接已复制', 'success'); })
-    .catch(function() { showToast('复制失败', 'warning'); });
+    var url = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function() { showToast('链接已复制', 'success'); })
+        .catch(function() { fallbackCopy(url); });
+    } else {
+        fallbackCopy(url);
+    }
+}
+function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('链接已复制', 'success'); }
+    catch(e) { showToast('复制失败', 'warning'); }
+    document.body.removeChild(ta);
 }
 </script>
 {% endblock %}
