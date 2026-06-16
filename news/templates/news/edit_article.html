@@ -128,6 +128,114 @@ $(document).ready(function() {
         }
     });
 
+    // 图片粘贴/拖拽上传处理
+    var uploadUrl = "{% url 'upload_editor_image' %}";
+    var csrfToken = getCookie('csrftoken');
+
+    function uploadImageBlob(blob, filename) {
+        var fd = new FormData();
+        fd.append('editormd-image-file', blob, filename);
+        fd.append('csrfmiddlewaretoken', csrfToken);
+        return $.ajax({
+            url: uploadUrl,
+            method: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false
+        });
+    }
+
+    function insertImageToEditor(url) {
+        editor.insertValue('\n![图片](' + url + ')\n');
+        showToast('图片已插入', 'success');
+    }
+
+    // 拦截粘贴事件：截图/复制图片 + Word含图片内容
+    $(document).on('paste', function(e) {
+        var clipboardData = e.originalEvent.clipboardData;
+        if (!clipboardData) return;
+
+        // 1. 优先处理剪贴板中的图片文件（截图、复制图片）
+        var imageFiles = [];
+        for (var i = 0; i < clipboardData.items.length; i++) {
+            var item = clipboardData.items[i];
+            if (item.type.indexOf('image/') !== -1) {
+                var blob = item.getAsFile();
+                if (blob) {
+                    var ext = item.type.split('/')[1] || 'png';
+                    if (ext === 'jpeg') ext = 'jpg';
+                    imageFiles.push({blob: blob, name: 'paste_' + Date.now() + '_' + i + '.' + ext});
+                }
+            }
+        }
+
+        if (imageFiles.length > 0) {
+            e.preventDefault();
+            imageFiles.forEach(function(img) {
+                uploadImageBlob(img.blob, img.name).done(function(r) {
+                    if (r.success === 1) insertImageToEditor(r.url);
+                    else showToast(r.message || '上传失败', 'danger');
+                }).fail(function() { showToast('图片上传失败', 'danger'); });
+            });
+            return;
+        }
+
+        // 2. 处理HTML粘贴（Word复制含图片的内容）
+        var htmlData = clipboardData.getData('text/html');
+        if (htmlData && htmlData.indexOf('data:image') !== -1) {
+            e.preventDefault();
+            var srcRegex = /src="(data:image\/[^;]+;base64,[^"]+)"/gi;
+            var matches = [];
+            var m;
+            while ((m = srcRegex.exec(htmlData)) !== null) {
+                matches.push({dataUrl: m[1], ext: m[1].split('/')[1].split(';')[0]});
+            }
+            // 同时处理单引号
+            var srcRegex2 = /src='(data:image\/[^;]+;base64,[^']+)'/gi;
+            while ((m = srcRegex2.exec(htmlData)) !== null) {
+                matches.push({dataUrl: m[1], ext: m[1].split('/')[1].split(';')[0]});
+            }
+
+            matches.forEach(function(match, idx) {
+                try {
+                    var byteString = atob(match.dataUrl.split(',')[1]);
+                    var mimeString = match.dataUrl.split(',')[0].split(':')[1].split(';')[0];
+                    var ab = new ArrayBuffer(byteString.length);
+                    var ia = new Uint8Array(ab);
+                    for (var j = 0; j < byteString.length; j++) ia[j] = byteString.charCodeAt(j);
+                    var blob = new Blob([ab], {type: mimeString});
+                    var ext = match.ext || 'png';
+                    if (ext === 'jpeg') ext = 'jpg';
+                    uploadImageBlob(blob, 'word_img_' + Date.now() + '_' + idx + '.' + ext).done(function(r) {
+                        if (r.success === 1) insertImageToEditor(r.url);
+                        else showToast(r.message || 'Word图片上传失败', 'danger');
+                    }).fail(function() { showToast('Word图片上传失败', 'danger'); });
+                } catch(err) { showToast('Word图片解析失败', 'warning'); }
+            });
+
+            // 纯文本内容也插入编辑器
+            var textData = clipboardData.getData('text/plain');
+            if (textData) editor.insertValue('\n' + textData + '\n');
+        }
+    });
+
+    // 拖拽图片上传
+    var editorArea = document.querySelector('.editormd') || document.getElementById('editormd');
+    $(document).on('dragover drop', function(e) { e.preventDefault(); });
+    $(editorArea).on('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var files = e.originalEvent.dataTransfer.files;
+        for (var i = 0; i < files.length; i++) {
+            if (files[i].type.indexOf('image/') !== -1) {
+                uploadImageBlob(files[i], files[i].name).done(function(r) {
+                    if (r.success === 1) insertImageToEditor(r.url);
+                    else showToast(r.message || '上传失败', 'danger');
+                }).fail(function() { showToast('图片上传失败', 'danger'); });
+            }
+        }
+    });
+
     $('#id_image').on('change', function(e) {
         var file = e.target.files[0];
         if (file) {
