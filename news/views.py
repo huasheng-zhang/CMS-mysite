@@ -9,7 +9,7 @@ from django.core.cache import cache
 from django.contrib import messages
 from django.utils import timezone
 from taggit.models import Tag
-from .models import NewsArticle, NewsCategory, NewsIndexPage, ArticleLike, ArticleComment
+from .models import NewsArticle, NewsCategory, NewsIndexPage, ArticleLike, ArticleComment, UserFollow, CategorySubscription, TagSubscription
 from .forms import NewsArticleForm
 import logging
 import re
@@ -303,7 +303,11 @@ def add_comment(request, slug):
 
 
 def news_home(request):
-    """新闻首页 - 显示最新文章"""
+    """新闻首页 - 支持双Tab: 最新 / 关注"""
+    tab = request.GET.get('tab', 'latest')
+    categories = get_cached_categories()
+
+    # 最新文章（默认）
     latest_articles = NewsArticle.objects.with_counts().published().select_related(
         'author', 'category'
     ).prefetch_related('tagged_items__tag').order_by('-publish_date')[:6]
@@ -314,17 +318,122 @@ def news_home(request):
         is_featured=True
     ).order_by('-publish_date')[:3]
 
-    # Add dedicated popular articles query with annotated counts
     popular_articles = NewsArticle.objects.with_counts().published().select_related(
         'author', 'category'
     ).prefetch_related('tagged_items__tag').order_by('-_read_count')[:5]
 
-    categories = get_cached_categories()
+    # 个性化Feed（关注Tab）
+    feed_articles = []
+    if request.user.is_authenticated and tab == 'following':
+        following_ids = UserFollow.objects.filter(
+            follower=request.user
+        ).values_list('following_id', flat=True)
+
+        subscribed_category_ids = CategorySubscription.objects.filter(
+            user=request.user
+        ).values_list('category_id', flat=True)
+
+        subscribed_tag_ids = TagSubscription.objects.filter(
+            user=request.user
+        ).values_list('tag_id', flat=True)
+
+        feed_articles = NewsArticle.objects.with_counts().published().select_related(
+            'author', 'category'
+        ).prefetch_related('tagged_items__tag').filter(
+            Q(author_id__in=following_ids) |
+            Q(category_id__in=subscribed_category_ids) |
+            Q(tags__id__in=subscribed_tag_ids)
+        ).order_by('-publish_date').distinct()[:6]
 
     context = {
+        'tab': tab,
         'latest_articles': latest_articles,
         'featured_articles': featured_articles,
         'popular_articles': popular_articles,
+        'feed_articles': feed_articles,
         'categories': categories,
     }
     return render(request, 'news/home.html', context)
+
+
+@login_required
+def follow_author(request, user_id):
+    """关注/取消关注作者"""
+    if request.method != 'POST':
+        return JsonResponse({'error': '仅支持POST请求'}, status=405)
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    target_user = get_object_or_404(User, pk=user_id)
+
+    if target_user == request.user:
+        return JsonResponse({'error': '不能关注自己'}, status=400)
+
+    with transaction.atomic():
+        follow, created = UserFollow.objects.get_or_create(
+            follower=request.user,
+            following=target_user
+        )
+        if not created:
+            follow.delete()
+            following = False
+        else:
+            following = True
+        follower_count = UserFollow.objects.filter(following=target_user).count()
+
+    return JsonResponse({
+        'following': following,
+        'follower_count': follower_count
+    })
+
+
+@login_required
+def subscribe_category(request, category_id):
+    """订阅/取消订阅分类"""
+    if request.method != 'POST':
+        return JsonResponse({'error': '仅支持POST请求'}, status=405)
+
+    category = get_object_or_404(NewsCategory, pk=category_id)
+
+    with transaction.atomic():
+        sub, created = CategorySubscription.objects.get_or_create(
+            user=request.user,
+            category=category
+        )
+        if not created:
+            sub.delete()
+            subscribed = False
+        else:
+            subscribed = True
+        subscriber_count = CategorySubscription.objects.filter(category=category).count()
+
+    return JsonResponse({
+        'subscribed': subscribed,
+        'subscriber_count': subscriber_count
+    })
+
+
+@login_required
+def subscribe_tag(request, tag_id):
+    """订阅/取消订阅标签"""
+    if request.method != 'POST':
+        return JsonResponse({'error': '仅支持POST请求'}, status=405)
+
+    tag = get_object_or_404(Tag, pk=tag_id)
+
+    with transaction.atomic():
+        sub, created = TagSubscription.objects.get_or_create(
+            user=request.user,
+            tag=tag
+        )
+        if not created:
+            sub.delete()
+            subscribed = False
+        else:
+            subscribed = True
+        subscriber_count = TagSubscription.objects.filter(tag=tag).count()
+
+    return JsonResponse({
+        'subscribed': subscribed,
+        'subscriber_count': subscriber_count
+    })

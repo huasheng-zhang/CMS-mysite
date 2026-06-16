@@ -6,6 +6,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django import forms
 from .models import UserProfile
+from news.models import NewsArticle, UserFollow, CategorySubscription, TagSubscription, NewsCategory
+from taggit.models import Tag
 
 User = get_user_model()
 
@@ -59,11 +61,26 @@ def profile_view(request):
         profile = UserProfile.objects.create(user=request.user)
 
     # 获取用户发布的文章
-    from news.models import NewsArticle
     user_articles = NewsArticle.objects.filter(author=request.user).order_by('-publish_date')[:10]
+
+    # 获取关注/订阅数据
+    following_ids = UserFollow.objects.filter(follower=request.user).values_list('following_id', flat=True)
+    following_users = User.objects.filter(id__in=following_ids)
+    follower_ids = UserFollow.objects.filter(following=request.user).values_list('follower_id', flat=True)
+    followers = User.objects.filter(id__in=follower_ids)
+    subscribed_categories = NewsCategory.objects.filter(
+        id__in=CategorySubscription.objects.filter(user=request.user).values_list('category_id', flat=True)
+    )
+    subscribed_tags = Tag.objects.filter(
+        id__in=TagSubscription.objects.filter(user=request.user).values_list('tag_id', flat=True)
+    )
 
     context = {
         'profile': profile,
         'user_articles': user_articles,
+        'following_users': following_users,
+        'followers': followers,
+        'subscribed_categories': subscribed_categories,
+        'subscribed_tags': subscribed_tags,
     }
     return render(request, 'internal_auth/profile.html', context)

@@ -24,4 +24,7 @@ urlpatterns = [
     path('edit/<uslug:slug>/', views.edit_news_article, name='edit_news_article'),
     path('like/<uslug:slug>/', views.like_article, name='like_article'),
     path('comment/<uslug:slug>/', views.add_comment, name='add_comment'),
+    path('follow/<int:user_id>/', views.follow_author, name='follow_author'),
+    path('subscribe/category/<int:category_id>/', views.subscribe_category, name='subscribe_category'),
+    path('subscribe/tag/<int:tag_id>/', views.subscribe_tag, name='subscribe_tag'),
 ]

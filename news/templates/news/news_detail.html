@@ -15,6 +15,13 @@
             <span class="feed-item-badge">推荐</span>
             {% endif %}
             <span class="author-name">{{ article.author.username|default:"匿名" }}</span>
+            {% if user.is_authenticated and article.author and article.author != user %}
+            <button class="follow-btn {% if is_following %}vote-btn-up active{% else %}vote-btn-up{% endif %}" 
+                data-user-id="{{ article.author.id }}" data-following="{% if is_following %}true{% else %}false{% endif %}"
+                style="padding:4px 12px;font-size:13px;">
+                {% if is_following %}已关注{% else %}关注{% endif %}
+            </button>
+            {% endif %}
             <span>{{ article.publish_date|date:"Y-m-d H:i"|default:"未设定" }}</span>
             <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
             <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
@@ -195,6 +202,27 @@ $(document).ready(function() {
                 showToast(msg, 'danger');
             },
             complete: function() { $btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 发布'); }
+        });
+    });
+
+    // Follow author
+    $('.follow-btn').click(function() {
+        var $btn = $(this);
+        var userId = $btn.data('user-id');
+        $btn.prop('disabled', true);
+        $.ajax({
+            url: '/news/follow/' + userId + '/',
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function(r) {
+                if (r.following) {
+                    $btn.addClass('active').data('following', 'true').text('已关注');
+                } else {
+                    $btn.removeClass('active').data('following', 'false').text('关注');
+                }
+            },
+            error: function() { showToast('操作失败', 'danger'); },
+            complete: function() { $btn.prop('disabled', false); }
         });
     });
 });

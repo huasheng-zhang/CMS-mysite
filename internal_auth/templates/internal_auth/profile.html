@@ -43,7 +43,124 @@
     {% endfor %}
 </div>
 
+<div class="profile-section">
+    <div style="font-size:18px;font-weight:600;margin-bottom:16px;">我的关注</div>
+    {% for user in following_users %}
+    <div class="sidebar-list-item" style="border-bottom:1px solid var(--divider);">
+        <span style="display:flex;align-items:center;gap:8px;">
+            <span class="zhihu-avatar" style="width:24px;height:24px;font-size:12px;">{{ user.username|truncatechars:1 }}</span>
+            <a href="{% url 'internal_auth:profile' %}" style="color:var(--text);">{{ user.username }}</a>
+        </span>
+        <button class="follow-btn vote-btn-up active" data-user-id="{{ user.id }}" style="padding:4px 12px;font-size:13px;">已关注</button>
+    </div>
+    {% empty %}
+    <div style="font-size:14px;color:var(--text-4);padding:8px 0;">还没有关注任何人</div>
+    {% endfor %}
+</div>
+
+<div class="profile-section">
+    <div style="font-size:18px;font-weight:600;margin-bottom:16px;">我的订阅</div>
+    <!-- Categories -->
+    {% if subscribed_categories %}
+    <div style="margin-bottom:12px;">
+        <div style="font-size:14px;color:var(--text-3);margin-bottom:8px;">分类</div>
+        {% for cat in subscribed_categories %}
+        <span class="feed-item-category" style="margin-right:6px;">
+            {{ cat.name }}
+            <button class="subscribe-cat-btn" data-cat-id="{{ cat.id }}" style="background:none;border:none;color:var(--text-4);cursor:pointer;font-size:12px;padding:0 4px;"><i class="fas fa-times"></i></button>
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <!-- Tags -->
+    {% if subscribed_tags %}
+    <div>
+        <div style="font-size:14px;color:var(--text-3);margin-bottom:8px;">标签</div>
+        {% for tag in subscribed_tags %}
+        <span class="article-tag" style="margin-right:6px;">
+            {{ tag.name }}
+            <button class="subscribe-tag-btn" data-tag-id="{{ tag.id }}" style="background:none;border:none;color:var(--text-4);cursor:pointer;font-size:12px;padding:0 4px;"><i class="fas fa-times"></i></button>
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if not subscribed_categories and not subscribed_tags %}
+    <div style="font-size:14px;color:var(--text-4);">还没有订阅任何分类或标签</div>
+    {% endif %}
+</div>
+
+<div class="profile-section">
+    <div style="font-size:18px;font-weight:600;margin-bottom:16px;">关注我的人</div>
+    {% for follower in followers %}
+    <div class="sidebar-list-item" style="border-bottom:1px solid var(--divider);">
+        <span style="display:flex;align-items:center;gap:8px;">
+            <span class="zhihu-avatar" style="width:24px;height:24px;font-size:12px;">{{ follower.username|truncatechars:1 }}</span>
+            <span style="color:var(--text);">{{ follower.username }}</span>
+        </span>
+    </div>
+    {% empty %}
+    <div style="font-size:14px;color:var(--text-4);padding:8px 0;">暂无关注者</div>
+    {% endfor %}
+</div>
+
 <div style="margin-top:16px;">
     <a href="{% url 'internal_auth:logout' %}" class="zhihu-btn-ghost"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
 </div>
+
+<script>
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+function showToast(message, type) {
+    type = type || 'info';
+    var icons = { success:'fas fa-check-circle', danger:'fas fa-exclamation-circle', warning:'fas fa-exclamation-triangle', info:'fas fa-info-circle' };
+    var html = '<div class="toast show align-items-center text-bg-' + type + ' border-0" role="alert">' +
+        '<div class="d-flex"><div class="toast-body"><i class="' + (icons[type]||icons.info) + '"></i> ' + message + '</div>' +
+        '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>';
+    $('.toast-container').append(html);
+    setTimeout(function() { $('.toast-container .toast:last').fadeOut(300, function() { $(this).remove(); }); }, 3000);
+}
+$(document).ready(function() {
+    $('.follow-btn').click(function() {
+        var $btn = $(this), userId = $btn.data('user-id');
+        $btn.prop('disabled', true);
+        $.ajax({
+            url: '/news/follow/' + userId + '/',
+            method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function(r) {
+                if (r.following) { $btn.addClass('active').text('已关注'); }
+                else { $btn.removeClass('active').text('关注'); $btn.closest('.sidebar-list-item').fadeOut(300, function() { $(this).remove(); }); }
+            },
+            complete: function() { $btn.prop('disabled', false); }
+        });
+    });
+    $('.subscribe-cat-btn').click(function() {
+        var $btn = $(this), catId = $btn.data('cat-id');
+        $.ajax({
+            url: '/news/subscribe/category/' + catId + '/',
+            method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function(r) { if (!r.subscribed) { $btn.closest('span').fadeOut(300, function() { $(this).remove(); }); showToast('已取消订阅', 'info'); } }
+        });
+    });
+    $('.subscribe-tag-btn').click(function() {
+        var $btn = $(this), tagId = $btn.data('tag-id');
+        $.ajax({
+            url: '/news/subscribe/tag/' + tagId + '/',
+            method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function(r) { if (!r.subscribed) { $btn.closest('span').fadeOut(300, function() { $(this).remove(); }); showToast('已取消订阅', 'info'); } }
+        });
+    });
+});
+</script>
 {% endblock %}

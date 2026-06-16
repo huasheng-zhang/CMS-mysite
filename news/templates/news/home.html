@@ -2,7 +2,49 @@
 {% block title %}新闻系统{% endblock %}
 
 {% block content %}
-<!-- Featured articles - use feed-item style with a special highlight -->
+<!-- Tab switcher -->
+<div style="background:var(--white);margin-bottom:10px;border-bottom:1px solid var(--divider);display:flex;">
+    <a href="{% url 'news_home' %}?tab=latest" class="zhihu-nav-tab" style="{% if tab == 'latest' %}color:var(--blue);border-bottom:2px solid var(--blue);{% endif %}">最新</a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'news_home' %}?tab=following" class="zhihu-nav-tab" style="{% if tab == 'following' %}color:var(--blue);border-bottom:2px solid var(--blue);{% endif %}">关注</a>
+    {% else %}
+    <span class="zhihu-nav-tab" style="color:var(--text-4);cursor:default;" title="请先登录">关注</span>
+    {% endif %}
+</div>
+
+{% if tab == 'following' and user.is_authenticated %}
+<!-- Personalized Feed -->
+<div style="background:var(--white);margin-bottom:10px;">
+    {% if feed_articles %}
+    {% for article in feed_articles %}
+    <div class="feed-item">
+        {% if article.image %}
+        <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
+        {% endif %}
+        <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a></div>
+        <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:20 }}</div>
+        <div class="feed-item-meta">
+            <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+            <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
+            {% if article.category %}
+            <span class="feed-item-category">{{ article.category.name }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state" style="padding:32px 20px;">
+        <p>你还没有关注任何作者或订阅分类</p>
+        <p style="font-size:14px;"><a href="{% url 'news_list' %}">去发现感兴趣的内容</a></p>
+    </div>
+    {% endif %}
+</div>
+{% elif tab == 'following' and not user.is_authenticated %}
+<div style="background:var(--white);margin-bottom:10px;padding:32px 20px;text-align:center;">
+    <p style="font-size:15px;color:var(--text-3);">请<a href="{% url 'internal_auth:login' %}" style="color:var(--blue)">登录</a>后查看个性化内容</p>
+</div>
+{% else %}
+<!-- Latest tab (default) -->
 {% if featured_articles %}
 <div style="background:var(--white);margin-bottom:10px;">
     <div style="padding:14px 20px;font-size:15px;font-weight:600;border-bottom:1px solid var(--divider);">
@@ -13,10 +55,7 @@
         {% if article.image %}
         <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
         {% endif %}
-        <div class="feed-item-title">
-            <a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a>
-            <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span>
-        </div>
+        <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a> <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span></div>
         <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:30 }}</div>
         <div class="feed-item-meta">
             <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
@@ -29,7 +68,6 @@
 </div>
 {% endif %}
 
-<!-- Latest articles - clean feed list -->
 <div style="background:var(--white);margin-bottom:10px;">
     <div style="padding:14px 20px;font-size:15px;font-weight:600;border-bottom:1px solid var(--divider);">
         <i class="fas fa-clock" style="color:var(--blue)"></i> 最新
@@ -53,10 +91,10 @@
     <div class="empty-state"><i class="fas fa-newspaper d-block"></i><p>暂无新闻</p></div>
     {% endfor %}
 </div>
+{% endif %}
 {% endblock %}
 
 {% block sidebar %}
-<!-- Categories - default sidebar already provided in base.html, just add hot articles -->
 {{ block.super }}
 <!-- Hot articles -->
 <div class="sidebar-card">

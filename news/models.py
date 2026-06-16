@@ -9,7 +9,7 @@ from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
 from modelcluster.fields import ParentalKey
 from modelcluster.contrib.taggit import ClusterTaggableManager
-from taggit.models import TaggedItemBase
+from taggit.models import TaggedItemBase, Tag
 
 
 class NewsCategory(models.Model):
@@ -323,6 +323,76 @@ class ArticleComment(models.Model):
             models.Index(fields=['article', 'is_approved']),
             models.Index(fields=['article', 'is_approved', '-created_at']),
         ]
+
+
+class UserFollow(models.Model):
+    """用户关注关系"""
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='following',
+        verbose_name="关注者"
+    )
+    following = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='followers',
+        verbose_name="被关注者"
+    )
+    created_at = models.DateTimeField("关注时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "关注关系"
+        verbose_name_plural = "关注关系"
+        unique_together = ['follower', 'following']
+        indexes = [
+            models.Index(fields=['follower']),
+            models.Index(fields=['following']),
+        ]
+
+
+class CategorySubscription(models.Model):
+    """分类订阅"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='category_subscriptions',
+        verbose_name="用户"
+    )
+    category = models.ForeignKey(
+        'NewsCategory',
+        on_delete=models.CASCADE,
+        related_name='subscribers',
+        verbose_name="分类"
+    )
+    created_at = models.DateTimeField("订阅时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "分类订阅"
+        verbose_name_plural = "分类订阅"
+        unique_together = ['user', 'category']
+
+
+class TagSubscription(models.Model):
+    """标签订阅"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='tag_subscriptions',
+        verbose_name="用户"
+    )
+    tag = models.ForeignKey(
+        Tag,
+        on_delete=models.CASCADE,
+        related_name='subscribers',
+        verbose_name="标签"
+    )
+    created_at = models.DateTimeField("订阅时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "标签订阅"
+        verbose_name_plural = "标签订阅"
+        unique_together = ['user', 'tag']
 
 
 class NewsIndexPage(Page):
