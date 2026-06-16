@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags static %}
+
+{% block extra_css %}
+<style>
+    .article-detail {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .article-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .meta-info {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        color: #666;
+        margin-bottom: 10px;
+    }
+    .interaction-stats {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin: 15px 0;
+    }
+    .article-content {
+        line-height: 1.6;
+        margin-bottom: 30px;
+    }
+    .interaction-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+    }
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    .btn-like {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-share {
+        background-color: #28a745;
+        color: white;
+    }
+    .comments-section {
+        margin-top: 40px;
+    }
+    .comment-item {
+        border-bottom: 1px solid #eee;
+        padding: 15px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container article-detail" data-article-id="{{ page.id }}">
+    <article>
+        <header class="article-header">
+            <div class="meta-info">
+                <span class="category" style="background-color: {{ page.category.color }};">
+                    {{ page.category.name }}
+                </span>
+                <span class="date">{{ page.publish_date|date:"Y-m-d H:i" }}</span>
+                <span class="author">作者：{{ page.author.first_name }}</span>
+            </div>
+            <h1>{{ page.title }}</h1>
+            <div class="interaction-stats">
+                <span class="read-count">阅读：{{ page.read_count }}</span>
+                <span class="like-count">点赞：{{ page.like_count }}</span>
+                <span class="comment-count">评论：{{ page.comment_count }}</span>
+            </div>
+        </header>
+        
+        <div class="article-content">
+            {% if page.intro %}
+            <div class="article-intro">{{ page.intro|richtext }}</div>
+            {% endif %}
+            
+            <div class="article-body">
+                {% for block in page.body %}
+                    {% if block.block_type == 'heading' %}
+                        <h2>{{ block.value }}</h2>
+                    {% elif block.block_type == 'paragraph' %}
+                        {{ block.value|richtext }}
+                    {% elif block.block_type == 'image' %}
+                        {% image block.value max-800x600 as img %}
+                        <div class="image-block">
+                            <img src="{{ img.url }}" alt="{{ img.alt }}" width="{{ img.width }}" height="{{ img.height }}">
+                        </div>
+                    {% elif block.block_type == 'video' %}
+                        <div class="video-block">
+                            {{ block.value|safe }}
+                        </div>
+                    {% elif block.block_type == 'html_content' %}
+                        <div class="html-content">
+                            {{ block.value|safe }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="article-interactions">
+            <div class="interaction-buttons">
+                <button class="btn btn-like" id="like-btn">
+                    <i class="icon-heart"></i> 点赞 <span id="like-count">{{ page.like_count }}</span>
+                </button>
+                <button class="btn btn-share" id="share-btn">
+                    <i class="icon-share"></i> 分享
+                </button>
+                <button class="btn btn-primary" id="comment-btn">
+                    <i class="icon-comment"></i> 评论
+                </button>
+            </div>
+        </div>
+        
+        <div class="comments-section">
+            <h3>评论 (<span id="comment-count">{{ page.comment_count }}</span>)</h3>
+            <div class="comment-form">
+                <textarea id="comment-content" placeholder="写下你的评论..." rows="3"></textarea>
+                <button id="submit-comment" class="btn btn-primary">发表评论</button>
+            </div>
+            <div class="comments-list" id="comments-list">
+                <!-- 评论将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </article>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const articleId = document.querySelector('.article-detail').dataset.articleId;
+        
+        // 点赞功能
+        document.getElementById('like-btn').addEventListener('click', function() {
+            fetch(`/api/news/${articleId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('like-count').textContent = data.count;
+                if (data.liked) {
+                    this.classList.add('liked');
+                } else {
+                    this.classList.remove('liked');
+                }
+            })
+            .catch(error => console.error('点赞失败:', error));
+        });
+        
+        // 评论功能
+        document.getElementById('submit-comment').addEventListener('click', function() {
+            const content = document.getElementById('comment-content').value.trim();
+            if (content.length < 5) {
+                alert('评论内容至少5个字符');
+                return;
+            }
+            
+            fetch(`/api/news/${articleId}/comment/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: content }),
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('comment-content').value = '';
+                document.getElementById('comment-count').textContent = data.count;
+                // 这里可以添加新评论到列表
+            })
+            .catch(error => console.error('评论失败:', error));
+        });
+        
+        // 分享功能
+        document.getElementById('share-btn').addEventListener('click', function() {
+            alert('分享功能将在企业环境配置后启用');
+        });
+    });
+</script>
+{% endblock %}

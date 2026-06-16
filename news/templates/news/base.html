@@ -1,0 +1,285 @@
+<!-- templates/news/base.html - 统一基础模板 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CMS新闻管理系统{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+        }
+        body {
+            padding-top: 70px;
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            transition: box-shadow 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+        .article-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .comment-box {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .featured-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--accent-color);
+            color: #212529;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        .badge-category {
+            font-size: 0.75em;
+            padding: 4px 8px;
+        }
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .footer {
+            background-color: #1e293b;
+            color: #94a3b8;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        .footer a {
+            color: #cbd5e1;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            color: #fff;
+        }
+        .search-form .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--secondary-color);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" style="background-color: var(--primary-color) !important;">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'news_home' %}">
+                <i class="fas fa-newspaper"></i> CMS新闻管理系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'news_home' %}">
+                            <i class="fas fa-home"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'news_list' %}">
+                            <i class="fas fa-list"></i> 新闻列表
+                        </a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'create_news_article' %}">
+                            <i class="fas fa-plus-circle"></i> 发布文章
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- 搜索框 -->
+                <form class="d-flex me-3 search-form" action="{% url 'news_list' %}" method="GET">
+                    <input class="form-control form-control-sm" type="search" name="search"
+                           placeholder="搜索新闻..." aria-label="搜索"
+                           value="{{ search_query|default:'' }}" style="width: 180px;">
+                </form>
+
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle"></i> {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'internal_auth:profile' %}">
+                                    <i class="fas fa-id-card"></i> 个人资料
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'create_news_article' %}">
+                                    <i class="fas fa-pen"></i> 发布文章
+                                </a></li>
+                                {% if user.is_staff %}
+                                <li><a class="dropdown-item" href="/admin/">
+                                    <i class="fas fa-cog"></i> 后台管理
+                                </a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'internal_auth:logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i> 退出登录
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'internal_auth:login' %}">
+                                <i class="fas fa-sign-in-alt"></i> 登录
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'internal_auth:register' %}">
+                                <i class="fas fa-user-plus"></i> 注册
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 消息提示 -->
+    <div class="toast-container">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="toast show align-items-center text-bg-{{ message.tags|default:'info' }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    {% if message.tags == 'success' %}<i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'error' %}<i class="fas fa-exclamation-circle"></i>
+                    {% elif message.tags == 'warning' %}<i class="fas fa-exclamation-triangle"></i>
+                    {% else %}<i class="fas fa-info-circle"></i>{% endif %}
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="关闭"></button>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="container mt-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h6 class="text-white">CMS新闻管理系统</h6>
+                    <p class="small">基于 Django + Wagtail 构建的企业级内容管理系统</p>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-white">快速链接</h6>
+                    <ul class="list-unstyled small">
+                        <li><a href="{% url 'news_home' %}">首页</a></li>
+                        <li><a href="{% url 'news_list' %}">新闻列表</a></li>
+                        <li><a href="/admin/">后台管理</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-white">技术支持</h6>
+                    <ul class="list-unstyled small">
+                        <li>Django 6.0</li>
+                        <li>Wagtail 7.4</li>
+                        <li>Bootstrap 5.3</li>
+                    </ul>
+                </div>
+            </div>
+            <hr style="border-color: #334155;">
+            <div class="text-center small">
+                &copy; 2024 CMS新闻管理系统. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        // 自动隐藏 Toast 消息
+        document.addEventListener('DOMContentLoaded', function() {
+            var toasts = document.querySelectorAll('.toast');
+            toasts.forEach(function(toast) {
+                setTimeout(function() {
+                    var bsToast = bootstrap.Toast.getInstance(toast);
+                    if (bsToast) bsToast.hide();
+                }, 4000);
+            });
+        });
+
+        // HTML 转义函数，防止 XSS
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 获取 CSRF Token
+        function getCookie(name) {
+            var value = "; " + document.cookie;
+            var parts = value.split("; " + name + "=");
+            if (parts.length === 2) return parts.pop().split(";").shift();
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

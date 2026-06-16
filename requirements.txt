@@ -1,0 +1,12 @@
+Django>=6,<6.1
+wagtail>=7.4,<7.5
+djangorestframework>=3.14
+django-allauth>=0.61
+django-filter>=23.5
+django-oauth-toolkit>=2.3
+social-auth-app-django>=5.4
+django-rest-framework-social-oauth2>=1.2
+django-extensions>=3.2
+wagtail-modeladmin>=2.0
+Pillow>=10.0
+gunicorn>=21.2

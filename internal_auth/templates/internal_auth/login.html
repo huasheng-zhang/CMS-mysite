@@ -1,0 +1,65 @@
+<!-- internal_auth/templates/internal_auth/login.html -->
+{% extends 'news/base.html' %}
+
+{% block title %}登录 - CMS新闻管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card mt-5">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-newspaper fa-3x text-primary mb-3"></i>
+                    <h3>用户登录</h3>
+                    <p class="text-muted">登录您的CMS新闻管理系统账户</p>
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            <i class="fas fa-exclamation-circle"></i> {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">
+                            <i class="fas fa-user"></i> 用户名 / 邮箱
+                        </label>
+                        <input type="text" name="username" id="id_username" class="form-control"
+                               placeholder="请输入用户名或邮箱" autofocus required
+                               value="{{ form.username.value|default:'' }}">
+                        {% if form.username.errors %}
+                            <div class="text-danger small mt-1">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">
+                            <i class="fas fa-lock"></i> 密码
+                        </label>
+                        <input type="password" name="password" id="id_password" class="form-control"
+                               placeholder="请输入密码" required>
+                        {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> 登录
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-white">
+                <small class="text-muted">
+                    还没有账户？<a href="{% url 'internal_auth:register' %}">立即注册</a>
+                    &middot;
+                    <a href="{% url 'internal_auth:password_reset' %}">忘记密码？</a>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

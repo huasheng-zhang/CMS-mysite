@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<div class="container">
+    <header class="page-header">
+        <h1>{{ page.title }}</h1>
+        {% if page.intro %}
+        <div class="intro">{{ page.intro|richtext }}</div>
+        {% endif %}
+    </header>
+    
+    <div class="articles-list">
+        {% for article in articles %}
+        <article class="article-item">
+            <div class="article-meta">
+                <span class="category" style="background-color: {{ article.category.color }};">
+                    {{ article.category.name }}
+                </span>
+                <span class="date">{{ article.specific.publish_date|date:"Y-m-d" }}</span>
+                <span class="author">作者：{{ article.specific.author.first_name }}</span>
+            </div>
+            <h2><a href="{% pageurl article %}">{{ article.title }}</a></h2>
+            {% if article.specific.intro %}
+            <div class="article-intro">{{ article.specific.intro|richtext }}</div>
+            {% endif %}
+            <div class="article-stats">
+                <span class="read-count">阅读：{{ article.specific.read_count }}</span>
+                <span class="like-count">点赞：{{ article.specific.like_count }}</span>
+                <span class="comment-count">评论：{{ article.specific.comment_count }}</span>
+            </div>
+        </article>
+        {% empty %}
+        <p>暂无新闻文章</p>
+        {% endfor %}
+    </div>
+    
+    {% if articles.has_other_pages %}
+    <div class="pagination">
+        {% if articles.has_previous %}
+        <a href="?page={{ articles.previous_page_number }}" class="prev-page">上一页</a>
+        {% endif %}
+        
+        <span class="current-page">
+            第 {{ articles.number }} 页 / 共 {{ articles.paginator.num_pages }} 页
+        </span>
+        
+        {% if articles.has_next %}
+        <a href="?page={{ articles.next_page_number }}" class="next-page">下一页</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

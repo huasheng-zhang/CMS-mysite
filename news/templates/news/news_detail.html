@@ -1,0 +1,481 @@
+<!-- templates/news/news_detail.html -->
+{% extends 'news/base.html' %}
+
+{% block title %}{{ article.title }} - CMS新闻管理系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .article-header {
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .article-meta {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+    }
+    .article-content {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+    .article-content p {
+        margin-bottom: 1.2rem;
+    }
+    .article-content h1, .article-content h2, .article-content h3,
+    .article-content h4, .article-content h5, .article-content h6 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+    .article-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 6px;
+        margin: 1rem 0;
+    }
+    .article-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .article-content table th, .article-content table td {
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 0.75rem;
+        white-space: nowrap;
+    }
+    .article-content table thead th {
+        background: #f1f5f9;
+        font-weight: 600;
+    }
+    .article-content table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+    .article-content blockquote {
+        border-left: 4px solid #3b82f6;
+        padding: 0.75rem 1rem;
+        margin: 1rem 0;
+        background: #f1f5f9;
+        border-radius: 0 6px 6px 0;
+    }
+    .article-content ul, .article-content ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .article-content pre, .article-content code {
+        background: #f1f5f9;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    .article-content pre {
+        padding: 1rem;
+        overflow-x: auto;
+    }
+    .article-content code {
+        padding: 0.15em 0.4em;
+    }
+    .article-content pre code {
+        padding: 0;
+        background: none;
+    }
+    .article-content hr {
+        border: none;
+        border-top: 1px solid #e2e8f0;
+        margin: 1.5rem 0;
+    }
+    .article-content a {
+        color: #3b82f6;
+        text-decoration: underline;
+    }
+    .article-cover {
+        width: 100%;
+        max-height: 400px;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+    .article-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    @media (max-width: 768px) {
+        .article-cover {
+            max-height: 220px;
+        }
+    }
+    .share-buttons a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #475569;
+        margin-right: 8px;
+        transition: all 0.2s;
+    }
+    .share-buttons a:hover {
+        background: var(--primary-color);
+        color: #fff;
+    }
+    .comment-form-area {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+    .comment-actions .btn {
+        font-size: 0.85rem;
+    }
+    .article-col {
+        overflow: hidden;
+        min-width: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 article-col">
+        <!-- 文章详情 -->
+        <article>
+            <div class="article-header">
+                <h1 class="mb-3">{{ article.title }}</h1>
+
+                {% if article.category %}
+                <span class="badge me-2" style="background-color: {{ article.category.color }};">
+                    {{ article.category.name }}
+                </span>
+                {% endif %}
+                {% if article.is_featured %}
+                <span class="badge bg-warning text-dark">推荐</span>
+                {% endif %}
+
+                <div class="article-meta mt-2">
+                    <i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }} &middot;
+                    <i class="fas fa-calendar"></i> {{ article.publish_date|date:"Y-m-d H:i"|default:"未设定" }} &middot;
+                    <i class="fas fa-eye"></i> {{ article.get_read_count }} 阅读 &middot;
+                    <i class="fas fa-thumbs-up"></i> {{ article.get_like_count }} 点赞 &middot;
+                    <i class="fas fa-comment"></i> {{ article.get_comment_count }} 评论
+                </div>
+            </div>
+
+            {% if article.image %}
+            <div class="article-cover mb-4">
+                <img src="{{ article.image.url }}" alt="{{ article.title }}">
+            </div>
+            {% endif %}
+
+            <div class="article-content">
+                {% if article.content %}
+                    {{ article.content|safe }}
+                {% endif %}
+
+                {% if article.body %}
+                    {% for block in article.body %}
+                        {% if block.block_type == 'heading' %}
+                            <h2>{{ block.value }}</h2>
+                        {% elif block.block_type == 'paragraph' %}
+                            {{ block.value }}
+                        {% elif block.block_type == 'image' %}
+                            <figure class="figure my-3">
+                                {% load wagtailimages_tags %}
+                                {% image block.value width-800 class="figure-img img-fluid rounded" %}
+                            </figure>
+                        {% elif block.block_type == 'video' %}
+                            <div class="ratio ratio-16x9 my-3">
+                                {{ block.value|safe }}
+                            </div>
+                        {% elif block.block_type == 'html_content' %}
+                            {{ block.value|safe }}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- 标签 -->
+            <div class="mt-4 mb-3">
+                <i class="fas fa-tags text-muted"></i>
+                {% for tag in article.tags.all %}
+                    <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+                {% empty %}
+                    <span class="text-muted small">暂无标签</span>
+                {% endfor %}
+            </div>
+
+            <!-- 分享 -->
+            {% if article.allow_sharing %}
+            <div class="share-buttons mb-4">
+                <span class="text-muted small me-2">分享到：</span>
+                <a href="javascript:void(0)" onclick="shareToWeibo()" title="分享到微博"><i class="fab fa-weibo"></i></a>
+                <a href="javascript:void(0)" onclick="copyLink()" title="复制链接"><i class="fas fa-link"></i></a>
+            </div>
+            {% endif %}
+        </article>
+
+        <!-- 互动功能 -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="comment-actions">
+                        {% if article.allow_likes %}
+                        <button id="like-btn" class="btn {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                                data-slug="{{ article.slug }}" {% if not user.is_authenticated %}disabled title="请先登录"{% endif %}>
+                            <i class="fas fa-thumbs-up"></i>
+                            <span id="like-count">{{ article.get_like_count }}</span> 点赞
+                        </button>
+                        {% endif %}
+
+                        {% if user.is_authenticated and user == article.author or user.is_staff %}
+                        <a href="{% url 'edit_news_article' article.slug %}" class="btn btn-outline-primary ms-2">
+                            <i class="fas fa-edit"></i> 编辑
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 评论区域 -->
+        <div class="card mt-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-comments"></i> 评论 (<span id="comment-count">{{ article.get_comment_count }}</span>)</h5>
+            </div>
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                {% if article.allow_comments %}
+                <div class="comment-form-area mb-4">
+                    <form id="comment-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea class="form-control" id="comment-content" rows="3"
+                                      placeholder="写下您的评论...（至少2个字符）" maxlength="1000"></textarea>
+                            <div class="form-text text-end">
+                                <span id="char-count">0</span>/1000
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="submit-comment-btn">
+                            <i class="fas fa-paper-plane"></i> 发表评论
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="alert alert-secondary">该文章已关闭评论功能。</div>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-info">
+                    请 <a href="{% url 'internal_auth:login' %}">登录</a> 后发表评论。
+                </div>
+                {% endif %}
+
+                <div id="comments-section">
+                    {% for comment in comments %}
+                    <div class="comment-box" id="comment-{{ comment.id }}">
+                        <div class="d-flex justify-content-between">
+                            <strong><i class="fas fa-user-circle text-muted"></i> {{ comment.user.username }}</strong>
+                            <small class="text-muted">{{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                        </div>
+                        <p class="mb-1 mt-1">{{ comment.content }}</p>
+                    </div>
+                    {% empty %}
+                    <div id="no-comments" class="text-center text-muted py-3">
+                        <i class="fas fa-comment-dots fa-2x mb-2 d-block"></i>
+                        <p>暂无评论，快来抢沙发吧！</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- 相关文章 -->
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-sync-alt"></i> 相关文章</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for related in related_articles %}
+                <a href="{% url 'news_detail' related.slug %}" class="list-group-item list-group-item-action">
+                    <h6 class="mb-1">{{ related.title|truncatechars:35 }}</h6>
+                    <small class="text-muted">
+                        {{ related.publish_date|date:"Y-m-d"|default:"--" }} &middot;
+                        <i class="fas fa-eye"></i> {{ related.get_read_count }}
+                    </small>
+                </a>
+                {% empty %}
+                <div class="list-group-item text-muted">暂无相关文章</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> 文章统计</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><i class="fas fa-eye text-primary"></i> 阅读量: <strong>{{ article.get_read_count }}</strong></li>
+                    <li class="mb-2"><i class="fas fa-thumbs-up text-danger"></i> 点赞数: <strong>{{ article.get_like_count }}</strong></li>
+                    <li class="mb-2"><i class="fas fa-comment text-success"></i> 评论数: <strong>{{ article.get_comment_count }}</strong></li>
+                    <li><i class="fas fa-clock text-info"></i> 发布时间: <strong>{{ article.publish_date|date:"Y-m-d H:i"|default:"未设定" }}</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 评论字数统计
+    $('#comment-content').on('input', function() {
+        var len = $(this).val().length;
+        $('#char-count').text(len);
+        if (len > 900) {
+            $('#char-count').addClass('text-danger');
+        } else {
+            $('#char-count').removeClass('text-danger');
+        }
+    });
+
+    // 点赞功能
+    $('#like-btn').click(function() {
+        var $btn = $(this);
+        var $countSpan = $('#like-count');
+        var originalHtml = $btn.html();
+
+        $btn.prop('disabled', true).html('<span class="loading-spinner"></span>');
+
+        $.ajax({
+            url: '{% url "like_article" article.slug %}',
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            success: function(response) {
+                if (response.liked) {
+                    $btn.removeClass('btn-outline-danger').addClass('btn-danger');
+                } else {
+                    $btn.removeClass('btn-danger').addClass('btn-outline-danger');
+                }
+                $countSpan.text(response.like_count);
+            },
+            error: function() {
+                showToast('操作失败，请稍后重试', 'danger');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html(
+                    '<i class="fas fa-thumbs-up"></i> <span id="like-count">' +
+                    $countSpan.text() + '</span> 点赞'
+                );
+            }
+        });
+    });
+
+    // 提交评论
+    $('#comment-form').submit(function(e) {
+        e.preventDefault();
+        var content = $('#comment-content').val().trim();
+        if (content.length < 2) {
+            showToast('评论内容至少2个字符', 'warning');
+            return;
+        }
+
+        var $submitBtn = $('#submit-comment-btn');
+        $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> 发送中...');
+
+        $.ajax({
+            url: '{% url "add_comment" article.slug %}',
+            method: 'POST',
+            data: {
+                'content': content,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    // 移除"暂无评论"提示
+                    $('#no-comments').remove();
+
+                    // 使用 escapeHtml 防止 XSS
+                    var commentHtml =
+                        '<div class="comment-box" id="comment-' + response.comment.id + '">' +
+                            '<div class="d-flex justify-content-between">' +
+                                '<strong><i class="fas fa-user-circle text-muted"></i> ' +
+                                escapeHtml(response.comment.author) + '</strong>' +
+                                '<small class="text-muted">' + escapeHtml(response.comment.created_at) + '</small>' +
+                            '</div>' +
+                            '<p class="mb-1 mt-1">' + escapeHtml(response.comment.content) + '</p>' +
+                        '</div>';
+                    $('#comments-section').prepend(commentHtml);
+                    $('#comment-content').val('');
+                    $('#char-count').text('0');
+
+                    // 更新评论计数
+                    if (response.comment_count !== undefined) {
+                        $('#comment-count').text(response.comment_count);
+                    }
+
+                    showToast('评论发表成功！', 'success');
+                } else {
+                    showToast(response.error || '评论发表失败', 'danger');
+                }
+            },
+            error: function(xhr) {
+                var msg = '评论发表失败，请稍后重试';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    msg = xhr.responseJSON.error;
+                }
+                showToast(msg, 'danger');
+            },
+            complete: function() {
+                $submitBtn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 发表评论');
+            }
+        });
+    });
+});
+
+// Toast 提示
+function showToast(message, type) {
+    type = type || 'info';
+    var iconMap = {
+        'success': 'fas fa-check-circle',
+        'danger': 'fas fa-exclamation-circle',
+        'warning': 'fas fa-exclamation-triangle',
+        'info': 'fas fa-info-circle'
+    };
+    var toastHtml =
+        '<div class="toast show align-items-center text-bg-' + type + ' border-0" role="alert">' +
+            '<div class="d-flex">' +
+                '<div class="toast-body"><i class="' + (iconMap[type] || iconMap['info']) + '"></i> ' + message + '</div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
+            '</div>' +
+        '</div>';
+    $('.toast-container').append(toastHtml);
+    setTimeout(function() {
+        $('.toast-container .toast:last').fadeOut(300, function() { $(this).remove(); });
+    }, 3000);
+}
+
+// 分享功能
+function shareToWeibo() {
+    var url = encodeURIComponent(window.location.href);
+    var title = encodeURIComponent(document.title);
+    window.open('http://service.weibo.com/share/share.php?url=' + url + '&title=' + title, '_blank');
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+        showToast('链接已复制到剪贴板', 'success');
+    }).catch(function() {
+        showToast('复制失败，请手动复制地址栏链接', 'warning');
+    });
+}
+</script>
+{% endblock %}
