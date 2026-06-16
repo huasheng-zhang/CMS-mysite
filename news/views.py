@@ -113,6 +113,14 @@ def news_detail(request, slug):
             user=request.user
         ).exists()
 
+    # 检查用户是否关注了文章作者
+    is_following = False
+    if request.user.is_authenticated and article.author and article.author != request.user:
+        is_following = UserFollow.objects.filter(
+            follower=request.user,
+            following=article.author
+        ).exists()
+
     # 将文章对象设置到 request 上，供 ReadTrackingMiddleware 使用
     request.article = article
 
@@ -121,6 +129,7 @@ def news_detail(request, slug):
         'related_articles': related_articles,
         'comments': comments,
         'user_liked': user_liked,
+        'is_following': is_following,
     }
     return render(request, 'news/news_detail.html', context)
 
