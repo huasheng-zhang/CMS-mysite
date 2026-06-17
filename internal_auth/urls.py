@@ -9,7 +9,7 @@ urlpatterns = [
     # 登录页面
     path('login/', auth_views.LoginView.as_view(template_name='internal_auth/login.html'), name='login'),
     # 注销页面
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(http_method_names=['GET', 'POST']), name='logout'),
     # 密码重置
     path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
