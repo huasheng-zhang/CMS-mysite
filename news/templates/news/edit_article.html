@@ -40,6 +40,7 @@
                 <div style="font-weight:500;margin-bottom:8px;"><i class="fas fa-info-circle"></i> 原有内容预览（HTML格式）：</div>
                 <div id="existing-content-html" style="max-height:200px;overflow:auto;border-radius:4px;padding:12px;background:var(--white);"></div>
             </div>
+            <div class="form-hint">支持Markdown编辑，可粘贴截图或拖拽图片上传</div>
             {% if form.content.errors %}<div class="form-error">{{ form.content.errors }}</div>{% endif %}
         </div>
         <div style="display:flex;gap:12px;">
@@ -88,18 +89,135 @@
 <script src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/pandao/editor.md@1.5.0/editormd.min.js"></script>
 <script>
-$(document).ready(function() {
-    // 处理已有HTML内容：如果content字段包含HTML，显示在预览区域而不是放入markdown编辑器
-    var existingContent = $('#id_content').val();
-    if (existingContent && existingContent.indexOf('<') !== -1) {
-        // 已有内容是HTML格式，在预览区域展示
-        $('#existing-content-html').html(existingContent);
-        $('#existing-content-preview').show();
-        // 编辑器初始为空，用户可以用Markdown添加新内容
-        // 提交时保留原有HTML + 新增Markdown的HTML
+var editor;
+var existingContent = $('#id_content').val();
+var uploadUrl = "{% url 'upload_editor_image' %}";
+var csrfToken = getCookie('csrftoken');
+
+// 显示已有HTML内容预览
+if (existingContent && existingContent.indexOf('<') !== -1) {
+    $('#existing-content-html').html(existingContent);
+    $('#existing-content-preview').show();
+}
+
+// 图片上传核心函数
+function uploadImageBlob(blob, filename, callback) {
+    var fd = new FormData();
+    fd.append('editormd-image-file', blob, filename);
+    fd.append('csrfmiddlewaretoken', csrfToken);
+    $.ajax({
+        url: uploadUrl,
+        method: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false
+    }).done(function(r) {
+        if (r.success === 1) {
+            callback(r.url);
+            showToast('图片上传成功', 'success');
+        } else {
+            showToast(r.message || '上传失败', 'danger');
+        }
+    }).fail(function() { showToast('图片上传失败', 'danger'); });
+}
+
+function insertImageToEditor(url) {
+    if (editor) {
+        editor.insertValue('\n![图片](' + url + ')\n');
+    }
+}
+
+function dataUrlToBlob(dataUrl) {
+    var parts = dataUrl.split(',');
+    var mime = parts[0].split(':')[1].split(';')[0];
+    var byteStr = atob(parts[1]);
+    var ab = new ArrayBuffer(byteStr.length);
+    var ia = new Uint8Array(ab);
+    for (var i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+    return new Blob([ab], {type: mime});
+}
+
+// 在CodeMirror编辑器上监听paste事件（而非document级别）
+function bindPasteHandler() {
+    var cmEditor = $('.editormd .CodeMirror');
+    if (cmEditor.length === 0) {
+        setTimeout(bindPasteHandler, 500);
+        return;
     }
 
-    var editor = editormd("editormd", {
+    cmEditor[0].addEventListener('paste', function(e) {
+        var cd = e.clipboardData;
+        if (!cd) return;
+
+        var hasImage = false;
+        for (var i = 0; i < cd.items.length; i++) {
+            if (cd.items[i].type.indexOf('image/') !== -1) { hasImage = true; break; }
+        }
+        if (!hasImage) {
+            var html = cd.getData('text/html');
+            if (html && html.indexOf('data:image') !== -1) hasImage = true;
+        }
+        if (!hasImage) return; // 纯文本不干预
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        // 截图/复制图片
+        for (var i = 0; i < cd.items.length; i++) {
+            var item = cd.items[i];
+            if (item.type.indexOf('image/') !== -1) {
+                var blob = item.getAsFile();
+                if (blob) {
+                    var ext = item.type.split('/')[1] || 'png';
+                    if (ext === 'jpeg') ext = 'jpg';
+                    uploadImageBlob(blob, 'paste_' + Date.now() + '.' + ext, insertImageToEditor);
+                }
+            }
+        }
+
+        // Word base64图片
+        var htmlData = cd.getData('text/html');
+        if (htmlData && htmlData.indexOf('data:image') !== -1) {
+            var regex = /src=["'](data:image\/[^;]+;base64,[^"']+)["']/gi;
+            var match;
+            while ((match = regex.exec(htmlData)) !== null) {
+                var dataUrl = match[1];
+                var ext = dataUrl.split('/')[1].split(';')[0] || 'png';
+                if (ext === 'jpeg') ext = 'jpg';
+                var blob = dataUrlToBlob(dataUrl);
+                uploadImageBlob(blob, 'word_' + Date.now() + '_' + Math.random().toString(36).substr(2,6) + '.' + ext, insertImageToEditor);
+            }
+            var textData = cd.getData('text/plain');
+            if (textData && editor) editor.insertValue(textData + '\n');
+        }
+    }, true);
+}
+
+function bindDropHandler() {
+    var cmEditor = $('.editormd .CodeMirror');
+    if (cmEditor.length === 0) {
+        setTimeout(bindDropHandler, 500);
+        return;
+    }
+
+    cmEditor[0].addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var files = e.dataTransfer.files;
+        for (var i = 0; i < files.length; i++) {
+            if (files[i].type.indexOf('image/') !== -1) {
+                uploadImageBlob(files[i], files[i].name, insertImageToEditor);
+            }
+        }
+    }, true);
+
+    cmEditor[0].addEventListener('dragover', function(e) {
+        e.preventDefault();
+    }, true);
+}
+
+$(document).ready(function() {
+    editor = editormd("editormd", {
         width: "100%",
         height: 500,
         path: "https://cdn.jsdelivr.net/gh/pandao/editor.md@1.5.0/lib/",
@@ -115,124 +233,20 @@ $(document).ready(function() {
         tocm: false,
         imageUpload: true,
         imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
-        imageUploadURL: "{% url 'upload_editor_image' %}",
+        imageUploadURL: uploadUrl,
         toolbarAutoFixed: true,
         onchange: function() {
             var newHtml = editor.getHTML();
             if (existingContent && existingContent.indexOf('<') !== -1 && !editor.getMarkdown().trim()) {
-                // 编辑器为空时保留原有HTML内容
                 $('#id_content').val(existingContent);
             } else {
                 $('#id_content').val(newHtml);
             }
-        }
-    });
-
-    // 图片粘贴/拖拽上传处理
-    var uploadUrl = "{% url 'upload_editor_image' %}";
-    var csrfToken = getCookie('csrftoken');
-
-    function uploadImageBlob(blob, filename) {
-        var fd = new FormData();
-        fd.append('editormd-image-file', blob, filename);
-        fd.append('csrfmiddlewaretoken', csrfToken);
-        return $.ajax({
-            url: uploadUrl,
-            method: 'POST',
-            data: fd,
-            processData: false,
-            contentType: false
-        });
-    }
-
-    function insertImageToEditor(url) {
-        editor.insertValue('\n![图片](' + url + ')\n');
-        showToast('图片已插入', 'success');
-    }
-
-    // 拦截粘贴事件：截图/复制图片 + Word含图片内容
-    $(document).on('paste', function(e) {
-        var clipboardData = e.originalEvent.clipboardData;
-        if (!clipboardData) return;
-
-        // 1. 优先处理剪贴板中的图片文件（截图、复制图片）
-        var imageFiles = [];
-        for (var i = 0; i < clipboardData.items.length; i++) {
-            var item = clipboardData.items[i];
-            if (item.type.indexOf('image/') !== -1) {
-                var blob = item.getAsFile();
-                if (blob) {
-                    var ext = item.type.split('/')[1] || 'png';
-                    if (ext === 'jpeg') ext = 'jpg';
-                    imageFiles.push({blob: blob, name: 'paste_' + Date.now() + '_' + i + '.' + ext});
-                }
-            }
-        }
-
-        if (imageFiles.length > 0) {
-            e.preventDefault();
-            imageFiles.forEach(function(img) {
-                uploadImageBlob(img.blob, img.name).done(function(r) {
-                    if (r.success === 1) insertImageToEditor(r.url);
-                    else showToast(r.message || '上传失败', 'danger');
-                }).fail(function() { showToast('图片上传失败', 'danger'); });
-            });
-            return;
-        }
-
-        // 2. 处理HTML粘贴（Word复制含图片的内容）
-        var htmlData = clipboardData.getData('text/html');
-        if (htmlData && htmlData.indexOf('data:image') !== -1) {
-            e.preventDefault();
-            var srcRegex = /src="(data:image\/[^;]+;base64,[^"]+)"/gi;
-            var matches = [];
-            var m;
-            while ((m = srcRegex.exec(htmlData)) !== null) {
-                matches.push({dataUrl: m[1], ext: m[1].split('/')[1].split(';')[0]});
-            }
-            // 同时处理单引号
-            var srcRegex2 = /src='(data:image\/[^;]+;base64,[^']+)'/gi;
-            while ((m = srcRegex2.exec(htmlData)) !== null) {
-                matches.push({dataUrl: m[1], ext: m[1].split('/')[1].split(';')[0]});
-            }
-
-            matches.forEach(function(match, idx) {
-                try {
-                    var byteString = atob(match.dataUrl.split(',')[1]);
-                    var mimeString = match.dataUrl.split(',')[0].split(':')[1].split(';')[0];
-                    var ab = new ArrayBuffer(byteString.length);
-                    var ia = new Uint8Array(ab);
-                    for (var j = 0; j < byteString.length; j++) ia[j] = byteString.charCodeAt(j);
-                    var blob = new Blob([ab], {type: mimeString});
-                    var ext = match.ext || 'png';
-                    if (ext === 'jpeg') ext = 'jpg';
-                    uploadImageBlob(blob, 'word_img_' + Date.now() + '_' + idx + '.' + ext).done(function(r) {
-                        if (r.success === 1) insertImageToEditor(r.url);
-                        else showToast(r.message || 'Word图片上传失败', 'danger');
-                    }).fail(function() { showToast('Word图片上传失败', 'danger'); });
-                } catch(err) { showToast('Word图片解析失败', 'warning'); }
-            });
-
-            // 纯文本内容也插入编辑器
-            var textData = clipboardData.getData('text/plain');
-            if (textData) editor.insertValue('\n' + textData + '\n');
-        }
-    });
-
-    // 拖拽图片上传
-    var editorArea = document.querySelector('.editormd') || document.getElementById('editormd');
-    $(document).on('dragover drop', function(e) { e.preventDefault(); });
-    $(editorArea).on('drop', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var files = e.originalEvent.dataTransfer.files;
-        for (var i = 0; i < files.length; i++) {
-            if (files[i].type.indexOf('image/') !== -1) {
-                uploadImageBlob(files[i], files[i].name).done(function(r) {
-                    if (r.success === 1) insertImageToEditor(r.url);
-                    else showToast(r.message || '上传失败', 'danger');
-                }).fail(function() { showToast('图片上传失败', 'danger'); });
-            }
+        },
+        onload: function() {
+            // Editor.md加载完成后绑定粘贴和拖拽处理
+            bindPasteHandler();
+            bindDropHandler();
         }
     });
 
@@ -245,15 +259,12 @@ $(document).ready(function() {
         }
     });
 
-    // 表单提交前确保HTML内容已同步到hidden input
     $('#article-form').on('submit', function() {
         if (editor) {
             var md = editor.getMarkdown().trim();
             if (md) {
-                // 编辑器有新内容，用新的HTML替换
                 $('#id_content').val(editor.getHTML());
             } else if (existingContent) {
-                // 编辑器为空，保留原有HTML内容
                 $('#id_content').val(existingContent);
             }
         }
