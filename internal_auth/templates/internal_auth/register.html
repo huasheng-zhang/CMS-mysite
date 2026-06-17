@@ -28,7 +28,7 @@
             {{ form.password2 }}
             {% if form.password2.errors %}<div class="form-error">{{ form.password2.errors }}</div>{% endif %}
         </div>
-        <button type="submit" class="auth-btn auth-btn-blue">注册</button>
+        <button type="submit" class="auth-btn auth-btn-primary">注册</button>
     </form>
     <div class="auth-footer">已有账户？<a href="{% url 'internal_auth:login' %}">登录</a></div>
 </div>

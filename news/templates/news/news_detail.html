@@ -16,9 +16,8 @@
             {% endif %}
             <span class="author-name">{{ article.author.username|default:"匿名" }}</span>
             {% if user.is_authenticated and article.author and article.author != user %}
-            <button class="follow-btn {% if is_following %}vote-btn-up active{% else %}vote-btn-up{% endif %}" 
-                data-user-id="{{ article.author.id }}" data-following="{% if is_following %}true{% else %}false{% endif %}"
-                style="padding:4px 12px;font-size:13px;">
+            <button class="follow-btn {% if is_following %}following{% else %}not-following{% endif %}" 
+                data-user-id="{{ article.author.id }}" data-following="{% if is_following %}true{% else %}false{% endif %}">
                 {% if is_following %}已关注{% else %}关注{% endif %}
             </button>
             {% endif %}
@@ -43,7 +42,7 @@
             {% elif block.block_type == 'paragraph' %}{{ block.value }}
             {% elif block.block_type == 'image' %}
                 {% load wagtailimages_tags %}
-                <figure style="margin:1em 0">{% image block.value width-800 class="img-fluid rounded" %}</figure>
+                <figure style="margin:1em 0">{% image block.value width-800 class="img-fluid" %}</figure>
             {% elif block.block_type == 'video' %}
                 <div class="ratio ratio-16x9" style="margin:1em 0">{{ block.value|safe }}</div>
             {% elif block.block_type == 'html_content' %}{{ block.value|safe }}
@@ -69,35 +68,35 @@
         </button>
         {% endif %}
         {% if article.allow_sharing %}
-        <button onclick="shareToWeibo()" class="zhihu-btn-ghost"><i class="fas fa-share-alt"></i> 分享</button>
-        <button onclick="copyLink()" class="zhihu-btn-ghost"><i class="fas fa-link"></i> 复制链接</button>
+        <button onclick="shareToWeibo()" class="btn-ghost"><i class="fas fa-share-alt"></i> 分享</button>
+        <button onclick="copyLink()" class="btn-ghost"><i class="fas fa-link"></i> 复制链接</button>
         {% endif %}
         {% if user.is_authenticated and user == article.author or user.is_staff %}
-        <a href="{% url 'edit_news_article' article.slug %}" class="zhihu-btn-ghost"><i class="fas fa-edit"></i> 编辑</a>
+        <a href="{% url 'edit_news_article' article.slug %}" class="btn-ghost"><i class="fas fa-edit"></i> 编辑</a>
         {% endif %}
     </div>
 </div>
 
 <!-- Comments -->
 <div class="comment-section">
-    <div class="comment-section-header"><i class="fas fa-comments" style="color:var(--blue)"></i> 评论 <span id="comment-count">{{ article.get_comment_count }}</span></div>
+    <div class="comment-section-header"><i class="fas fa-comments" style="color:var(--accent)"></i> 评论 <span id="comment-count">{{ article.get_comment_count }}</span></div>
     {% if user.is_authenticated %}
     {% if article.allow_comments %}
     <div class="comment-input-area">
         <form id="comment-form">
             {% csrf_token %}
             <textarea id="comment-content" rows="3" placeholder="写下你的评论...（至少2个字符）" maxlength="1000"></textarea>
-            <div style="display:flex;justify-content:space-between;margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;margin-top:10px;">
                 <span style="font-size:12px;color:var(--text-4)"><span id="char-count">0</span>/1000</span>
-                <button type="submit" class="zhihu-btn-primary" id="submit-comment-btn" style="font-size:14px;padding:6px 16px;"><i class="fas fa-paper-plane"></i> 发布</button>
+                <button type="submit" class="nav-btn" id="submit-comment-btn" style="font-size:14px;padding:8px 18px;"><i class="fas fa-paper-plane"></i> 发布</button>
             </div>
         </form>
     </div>
     {% else %}
-    <div style="padding:16px 20px;font-size:14px;color:var(--text-3)">该文章已关闭评论</div>
+    <div style="padding:20px 28px;font-size:14px;color:var(--text-3)">该文章已关闭评论</div>
     {% endif %}
     {% else %}
-    <div style="padding:16px 20px;font-size:14px;color:var(--text-3)">请 <a href="{% url 'internal_auth:login' %}">登录</a> 后发表评论</div>
+    <div style="padding:20px 28px;font-size:14px;color:var(--text-3)">请 <a href="{% url 'internal_auth:login' %}" style="color:var(--accent)">登录</a> 后发表评论</div>
     {% endif %}
 
     <div id="comments-section">
@@ -108,7 +107,7 @@
             <div class="comment-content">{{ comment.content }}</div>
         </div>
         {% empty %}
-        <div id="no-comments" class="empty-state" style="padding:32px 20px;"><p style="font-size:14px">暂无评论，快来抢沙发</p></div>
+        <div id="no-comments" class="empty-state" style="padding:40px 28px;"><p style="font-size:14px">暂无评论，快来抢沙发</p></div>
         {% endfor %}
     </div>
 </div>
@@ -118,7 +117,7 @@
 {{ block.super }}
 <!-- Related articles -->
 <div class="sidebar-card">
-    <div class="sidebar-card-header"><i class="fas fa-sync-alt"></i> 相关文章</div>
+    <div class="sidebar-card-header"><i class="fas fa-arrows-rotate"></i> 相关文章</div>
     <div class="sidebar-card-body">
         {% for related in related_articles %}
         <a href="{% url 'news_detail' related.slug %}" class="sidebar-list-item">
@@ -133,11 +132,11 @@
 
 <!-- Stats -->
 <div class="sidebar-card">
-    <div class="sidebar-card-header"><i class="fas fa-chart-bar"></i> 统计</div>
-    <div class="sidebar-card-body" style="padding:14px 16px;">
-        <div style="font-size:14px;color:var(--text-2);display:flex;flex-direction:column;gap:8px;">
-            <span><i class="fas fa-eye" style="color:var(--blue);width:18px;"></i> 阅读量 <strong>{{ article.get_read_count }}</strong></span>
-            <span><i class="fas fa-thumbs-up" style="color:var(--red);width:18px;"></i> 点赞数 <strong>{{ article.get_like_count }}</strong></span>
+    <div class="sidebar-card-header"><i class="fas fa-chart-simple"></i> 统计</div>
+    <div class="sidebar-card-body" style="padding:16px 20px;">
+        <div style="font-size:14px;color:var(--text-2);display:flex;flex-direction:column;gap:10px;">
+            <span><i class="fas fa-eye" style="color:var(--blue-link);width:18px;"></i> 阅读量 <strong>{{ article.get_read_count }}</strong></span>
+            <span><i class="fas fa-thumbs-up" style="color:var(--accent);width:18px;"></i> 点赞数 <strong>{{ article.get_like_count }}</strong></span>
             <span><i class="fas fa-comment" style="color:var(--green);width:18px;"></i> 评论数 <strong>{{ article.get_comment_count }}</strong></span>
         </div>
     </div>
@@ -151,7 +150,7 @@ $(document).ready(function() {
         var len = $(this).val().length;
         $('#char-count').text(len);
         if (len > 900) $('#char-count').css('color','var(--red)');
-        else $('#char-count').css('color','');
+        else $('#char-count').css('color','var(--text-4)');
     });
 
     $('#like-btn').click(function() {
@@ -165,7 +164,7 @@ $(document).ready(function() {
                 else $btn.removeClass('active');
                 $count.text(r.like_count);
             },
-            error: function() { showToast('操作失败', 'danger'); },
+            error: function() { showToast('操作失败', 'error'); },
             complete: function() {
                 $btn.prop('disabled', false).html('<i class="fas fa-caret-up"></i> <span id="like-count">' + $count.text() + '</span> 赞同');
                 if ($btn.hasClass('active')) $btn.html('<i class="fas fa-caret-up"></i> <span id="like-count">' + $count.text() + '</span> 已赞同');
@@ -195,11 +194,11 @@ $(document).ready(function() {
                     $('#char-count').text('0');
                     if (r.comment_count !== undefined) $('#comment-count').text(r.comment_count);
                     showToast('评论成功', 'success');
-                } else { showToast(r.error || '评论失败', 'danger'); }
+                } else { showToast(r.error || '评论失败', 'error'); }
             },
             error: function(xhr) {
                 var msg = xhr.responseJSON ? xhr.responseJSON.error : '评论失败';
-                showToast(msg, 'danger');
+                showToast(msg, 'error');
             },
             complete: function() { $btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 发布'); }
         });
@@ -216,26 +215,16 @@ $(document).ready(function() {
             headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function(r) {
                 if (r.following) {
-                    $btn.addClass('active').data('following', 'true').text('已关注');
+                    $btn.removeClass('not-following').addClass('following').data('following', 'true').text('已关注');
                 } else {
-                    $btn.removeClass('active').data('following', 'false').text('关注');
+                    $btn.removeClass('following').addClass('not-following').data('following', 'false').text('关注');
                 }
             },
-            error: function() { showToast('操作失败', 'danger'); },
+            error: function() { showToast('操作失败', 'error'); },
             complete: function() { $btn.prop('disabled', false); }
         });
     });
 });
-
-function showToast(message, type) {
-    type = type || 'info';
-    var icons = { success:'fas fa-check-circle', danger:'fas fa-exclamation-circle', warning:'fas fa-exclamation-triangle', info:'fas fa-info-circle' };
-    var html = '<div class="toast show align-items-center text-bg-' + type + ' border-0" role="alert">' +
-        '<div class="d-flex"><div class="toast-body"><i class="' + (icons[type]||icons.info) + '"></i> ' + message + '</div>' +
-        '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>';
-    $('.toast-container').append(html);
-    setTimeout(function() { $('.toast-container .toast:last').fadeOut(300, function() { $(this).remove(); }); }, 3000);
-}
 
 function shareToWeibo() {
     var url = encodeURIComponent(window.location.href), title = encodeURIComponent(document.title);

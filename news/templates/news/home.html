@@ -3,18 +3,18 @@
 
 {% block content %}
 <!-- Tab switcher -->
-<div style="background:var(--white);margin-bottom:10px;border-bottom:1px solid var(--divider);display:flex;">
-    <a href="{% url 'news_home' %}?tab=latest" class="zhihu-nav-tab" style="{% if tab == 'latest' %}color:var(--blue);border-bottom:2px solid var(--blue);{% endif %}">最新</a>
+<div style="background:var(--bg-card);margin-bottom:12px;border-radius:var(--radius-lg);border:1px solid var(--divider);display:flex;border-bottom:none;">
+    <a href="{% url 'news_home' %}?tab=latest" style="padding:14px 24px;font-size:14px;font-weight:600;color:{% if tab == 'latest' %}var(--accent){% else %}var(--text-3){% endif %};border-bottom:{% if tab == 'latest' %}2px solid var(--accent){% else %}none{% endif %};transition:all .2s;">最新</a>
     {% if user.is_authenticated %}
-    <a href="{% url 'news_home' %}?tab=following" class="zhihu-nav-tab" style="{% if tab == 'following' %}color:var(--blue);border-bottom:2px solid var(--blue);{% endif %}">关注</a>
+    <a href="{% url 'news_home' %}?tab=following" style="padding:14px 24px;font-size:14px;font-weight:600;color:{% if tab == 'following' %}var(--accent){% else %}var(--text-3){% endif %};border-bottom:{% if tab == 'following' %}2px solid var(--accent){% else %}none{% endif %};transition:all .2s;">关注</a>
     {% else %}
-    <span class="zhihu-nav-tab" style="color:var(--text-4);cursor:default;" title="请先登录">关注</span>
+    <span style="padding:14px 24px;font-size:14px;font-weight:600;color:var(--text-4);cursor:default;" title="请先登录">关注</span>
     {% endif %}
 </div>
 
 {% if tab == 'following' and user.is_authenticated %}
 <!-- Personalized Feed -->
-<div style="background:var(--white);margin-bottom:10px;">
+<div style="background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--divider);margin-bottom:12px;">
     {% if feed_articles %}
     {% for article in feed_articles %}
     <div class="feed-item">
@@ -37,27 +37,25 @@
     </div>
     {% endfor %}
     {% else %}
-    <div class="empty-state" style="padding:32px 20px;">
+    <div class="empty-state" style="padding:48px 24px;">
         <p>你还没有关注任何作者或订阅分类</p>
-        <p style="font-size:14px;"><a href="{% url 'news_list' %}">去发现感兴趣的内容</a></p>
+        <p style="font-size:14px;margin-top:12px;"><a href="{% url 'news_list' %}">去发现感兴趣的内容</a></p>
     </div>
     {% endif %}
 </div>
 {% elif tab == 'following' and not user.is_authenticated %}
-<div style="background:var(--white);margin-bottom:10px;padding:32px 20px;text-align:center;">
-    <p style="font-size:15px;color:var(--text-3);">请<a href="{% url 'internal_auth:login' %}" style="color:var(--blue)">登录</a>后查看个性化内容</p>
+<div style="background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--divider);padding:48px 24px;text-align:center;">
+    <p style="font-size:15px;color:var(--text-3);">请<a href="{% url 'internal_auth:login' %}" style="color:var(--accent)">登录</a>后查看个性化内容</p>
 </div>
 {% else %}
 <!-- Latest tab (default) -->
 {% if featured_articles %}
-<div style="background:var(--white);margin-bottom:10px;">
-    <div style="padding:14px 20px;font-size:15px;font-weight:600;border-bottom:1px solid var(--divider);">
-        <i class="fas fa-star" style="color:var(--orange)"></i> 推荐
-    </div>
+<div style="background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--divider);margin-bottom:12px;">
+    <div class="section-title"><i class="fas fa-star"></i> 推荐</div>
     {% for article in featured_articles %}
     <div class="feed-item">
         <div class="feed-item-text">
-            <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a> <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span></div>
+            <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a> <span class="feed-item-badge">推荐</span></div>
             <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:30 }}</div>
             <div class="feed-item-meta">
                 <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
@@ -76,10 +74,8 @@
 </div>
 {% endif %}
 
-<div style="background:var(--white);margin-bottom:10px;">
-    <div style="padding:14px 20px;font-size:15px;font-weight:600;border-bottom:1px solid var(--divider);">
-        <i class="fas fa-clock" style="color:var(--blue)"></i> 最新
-    </div>
+<div style="background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--divider);margin-bottom:12px;">
+    <div class="section-title"><i class="fas fa-clock"></i> 最新</div>
     {% for article in latest_articles %}
     <div class="feed-item">
         <div class="feed-item-text">
@@ -100,7 +96,7 @@
         {% endif %}
     </div>
     {% empty %}
-    <div class="empty-state"><i class="fas fa-newspaper d-block"></i><p>暂无新闻</p></div>
+    <div class="empty-state"><i class="fas fa-newspaper" style="display:block;"></i><p>暂无新闻</p></div>
     {% endfor %}
 </div>
 {% endif %}

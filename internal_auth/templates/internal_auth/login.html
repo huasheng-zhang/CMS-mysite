@@ -7,8 +7,8 @@
     <div class="auth-subtitle">登录你的新闻管理系统账户</div>
 
     {% if form.non_field_errors %}
-    <div style="padding:8px 12px;background:#fef2f2;color:var(--red);font-size:13px;border-radius:4px;margin-bottom:16px;">
-        {% for error in form.non_field_errors %}<i class="fas fa-exclamation-circle"></i> {{ error }}{% endfor %}
+    <div class="auth-error-box">
+        {% for error in form.non_field_errors %}<i class="fas fa-circle-exclamation"></i> {{ error }}{% endfor %}
     </div>
     {% endif %}
 
@@ -24,7 +24,7 @@
             <input type="password" name="password" id="id_password" placeholder="请输入密码" required>
             {% if form.password.errors %}<div class="form-error">{{ form.password.errors }}</div>{% endif %}
         </div>
-        <button type="submit" class="auth-btn auth-btn-blue">登录</button>
+        <button type="submit" class="auth-btn auth-btn-primary">登录</button>
     </form>
     <div class="auth-footer">
         还没有账户？<a href="{% url 'internal_auth:register' %}">注册</a>

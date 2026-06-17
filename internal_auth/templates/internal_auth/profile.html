@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="profile-section">
-    <div style="font-size:18px;font-weight:600;margin-bottom:16px;">个人资料</div>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:20px;letter-spacing:.01em;">个人资料</div>
     <div style="display:flex;gap:24px;">
         <table class="profile-table">
             <tr><td class="label">用户名</td><td class="value">{{ request.user.username }}</td></tr>
@@ -21,14 +21,18 @@
 </div>
 
 <div class="profile-section">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <span style="font-size:18px;font-weight:600;">我的文章</span>
-        <a href="{% url 'create_news_article' %}" class="zhihu-btn-primary" style="font-size:14px;padding:6px 16px;"><i class="fas fa-pen"></i> 写文章</a>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <span style="font-family:var(--font-display);font-size:20px;font-weight:700;letter-spacing:.01em;">我的文章</span>
+        <a href="{% url 'create_news_article' %}" class="nav-btn" style="font-size:14px;"><i class="fas fa-pen-nib"></i> 写文章</a>
     </div>
     {% for article in user_articles %}
     <div class="feed-item" style="border-left:none;border-right:none;">
         <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a>
-            <span style="font-size:12px;padding:2px 6px;border-radius:3px;background:{% if article.status == 'published' %}var(--green){% else %}var(--bg){% endif %};color:{% if article.status == 'published' %}#fff{% else %}var(--text-4){% endif %};">{{ article.get_status_display }}</span>
+            {% if article.status == 'published' %}
+            <span class="tag-badge tag-badge-green">{{ article.get_status_display }}</span>
+            {% else %}
+            <span class="tag-badge tag-badge-accent">{{ article.get_status_display }}</span>
+            {% endif %}
         </div>
         <div class="feed-item-meta">
             <span>{{ article.publish_date|date:"Y-m-d"|default:"未发布" }}</span>
@@ -37,21 +41,21 @@
         </div>
     </div>
     {% empty %}
-    <div style="text-align:center;padding:24px;font-size:14px;color:var(--text-4);">
-        暂无文章，<a href="{% url 'create_news_article' %}">开始写第一篇</a>
+    <div style="text-align:center;padding:32px;font-size:14px;color:var(--text-4);">
+        暂无文章，<a href="{% url 'create_news_article' %}" style="color:var(--accent)">开始写第一篇</a>
     </div>
     {% endfor %}
 </div>
 
 <div class="profile-section">
-    <div style="font-size:18px;font-weight:600;margin-bottom:16px;">我的关注</div>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:20px;letter-spacing:.01em;">我的关注</div>
     {% for user in following_users %}
     <div class="sidebar-list-item" style="border-bottom:1px solid var(--divider);">
         <span style="display:flex;align-items:center;gap:8px;">
-            <span class="zhihu-avatar" style="width:24px;height:24px;font-size:12px;">{{ user.username|truncatechars:1 }}</span>
+            <span class="nav-avatar" style="width:24px;height:24px;font-size:11px;">{{ user.username|truncatechars:1 }}</span>
             <a href="{% url 'internal_auth:profile' %}" style="color:var(--text);">{{ user.username }}</a>
         </span>
-        <button class="follow-btn vote-btn-up active" data-user-id="{{ user.id }}" style="padding:4px 12px;font-size:13px;">已关注</button>
+        <button class="follow-btn following" data-user-id="{{ user.id }}" style="padding:4px 12px;font-size:13px;">已关注</button>
     </div>
     {% empty %}
     <div style="font-size:14px;color:var(--text-4);padding:8px 0;">还没有关注任何人</div>
@@ -59,25 +63,23 @@
 </div>
 
 <div class="profile-section">
-    <div style="font-size:18px;font-weight:600;margin-bottom:16px;">我的订阅</div>
-    <!-- Categories -->
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:20px;letter-spacing:.01em;">我的订阅</div>
     {% if subscribed_categories %}
-    <div style="margin-bottom:12px;">
-        <div style="font-size:14px;color:var(--text-3);margin-bottom:8px;">分类</div>
+    <div style="margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text-3);margin-bottom:10px;letter-spacing:.02em;">分类</div>
         {% for cat in subscribed_categories %}
-        <span class="feed-item-category" style="margin-right:6px;">
+        <span class="feed-item-category" style="margin-right:8px;">
             {{ cat.name }}
             <button class="subscribe-cat-btn" data-cat-id="{{ cat.id }}" style="background:none;border:none;color:var(--text-4);cursor:pointer;font-size:12px;padding:0 4px;"><i class="fas fa-times"></i></button>
         </span>
         {% endfor %}
     </div>
     {% endif %}
-    <!-- Tags -->
     {% if subscribed_tags %}
     <div>
-        <div style="font-size:14px;color:var(--text-3);margin-bottom:8px;">标签</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-3);margin-bottom:10px;letter-spacing:.02em;">标签</div>
         {% for tag in subscribed_tags %}
-        <span class="article-tag" style="margin-right:6px;">
+        <span class="article-tag" style="margin-right:8px;">
             {{ tag.name }}
             <button class="subscribe-tag-btn" data-tag-id="{{ tag.id }}" style="background:none;border:none;color:var(--text-4);cursor:pointer;font-size:12px;padding:0 4px;"><i class="fas fa-times"></i></button>
         </span>
@@ -90,11 +92,11 @@
 </div>
 
 <div class="profile-section">
-    <div style="font-size:18px;font-weight:600;margin-bottom:16px;">关注我的人</div>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:20px;letter-spacing:.01em;">关注我的人</div>
     {% for follower in followers %}
     <div class="sidebar-list-item" style="border-bottom:1px solid var(--divider);">
         <span style="display:flex;align-items:center;gap:8px;">
-            <span class="zhihu-avatar" style="width:24px;height:24px;font-size:12px;">{{ follower.username|truncatechars:1 }}</span>
+            <span class="nav-avatar" style="width:24px;height:24px;font-size:11px;">{{ follower.username|truncatechars:1 }}</span>
             <span style="color:var(--text);">{{ follower.username }}</span>
         </span>
     </div>
@@ -106,34 +108,11 @@
 <div style="margin-top:16px;">
     <form action="{% url 'internal_auth:logout' %}" method="POST" style="display:inline;">
         {% csrf_token %}
-        <button type="submit" class="zhihu-btn-ghost" style="border:none;cursor:pointer;"><i class="fas fa-sign-out-alt"></i> 退出登录</button>
+        <button type="submit" class="btn-ghost" style="border-color:rgba(239,68,68,.2);color:var(--red);" onmouseover="this.style.background='var(--red-muted)'" onmouseout="this.style.background='transparent'"><i class="fas fa-arrow-right-from-bracket"></i> 退出登录</button>
     </form>
 </div>
 
 <script>
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-function showToast(message, type) {
-    type = type || 'info';
-    var icons = { success:'fas fa-check-circle', danger:'fas fa-exclamation-circle', warning:'fas fa-exclamation-triangle', info:'fas fa-info-circle' };
-    var html = '<div class="toast show align-items-center text-bg-' + type + ' border-0" role="alert">' +
-        '<div class="d-flex"><div class="toast-body"><i class="' + (icons[type]||icons.info) + '"></i> ' + message + '</div>' +
-        '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>';
-    $('.toast-container').append(html);
-    setTimeout(function() { $('.toast-container .toast:last').fadeOut(300, function() { $(this).remove(); }); }, 3000);
-}
 $(document).ready(function() {
     $('.follow-btn').click(function() {
         var $btn = $(this), userId = $btn.data('user-id');
@@ -142,8 +121,12 @@ $(document).ready(function() {
             url: '/news/follow/' + userId + '/',
             method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function(r) {
-                if (r.following) { $btn.addClass('active').text('已关注'); }
-                else { $btn.removeClass('active').text('关注'); $btn.closest('.sidebar-list-item').fadeOut(300, function() { $(this).remove(); }); }
+                if (r.following) {
+                    $btn.removeClass('not-following').addClass('following').text('已关注');
+                } else {
+                    $btn.removeClass('following').addClass('not-following').text('关注');
+                    $btn.closest('.sidebar-list-item').fadeOut(300, function() { $(this).remove(); });
+                }
             },
             complete: function() { $btn.prop('disabled', false); }
         });

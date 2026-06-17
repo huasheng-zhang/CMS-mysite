@@ -6,8 +6,8 @@
 {% endblock %}
 
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <span style="font-size:18px;font-weight:600;">写文章</span>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <span style="font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:.01em;">写文章</span>
 </div>
 
 <div class="form-card">
@@ -71,13 +71,13 @@
                 <div id="image-preview" style="margin-top:8px;"></div>
             </div>
         </div>
-        <div style="margin-bottom:16px;">
+        <div style="margin-bottom:20px;">
             {{ form.is_featured }}
             <span class="form-check-label">设为推荐文章</span>
         </div>
-        <div style="display:flex;gap:8px;">
-            <button type="submit" class="zhihu-btn-primary" id="submit-btn"><i class="fas fa-save"></i> 发布</button>
-            <a href="{% url 'news_list' %}" class="zhihu-btn-ghost">取消</a>
+        <div style="display:flex;gap:10px;">
+            <button type="submit" class="nav-btn" id="submit-btn"><i class="fas fa-save"></i> 发布</button>
+            <a href="{% url 'news_list' %}" class="btn-ghost">取消</a>
         </div>
     </form>
 </div>

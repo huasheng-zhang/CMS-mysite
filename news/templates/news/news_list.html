@@ -3,7 +3,7 @@
 
 {% block content %}
 <!-- Search and filter bar -->
-<div style="background:var(--white);margin-bottom:10px;">
+<div style="background:var(--bg-card);border-radius:var(--radius-lg) var(--radius-lg) 0 0;border:1px solid var(--divider);border-bottom:none;margin-bottom:0;">
     <div class="filter-bar">
         <form method="GET" style="display:flex;gap:10px;width:100%;align-items:center;">
             <input type="text" name="search" placeholder="搜索标题或简介..." value="{{ search_query|default:'' }}">
@@ -13,20 +13,20 @@
                 <option value="{{ category.id }}" {% if current_category == category.id %}selected{% endif %}>{{ category.name }}</option>
                 {% endfor %}
             </select>
-            <button type="submit" class="zhihu-btn-primary" style="padding:6px 16px;font-size:14px;"><i class="fas fa-search"></i> 搜索</button>
+            <button type="submit" class="btn-filter"><i class="fas fa-search"></i> 搜索</button>
         </form>
     </div>
 </div>
 
 <!-- Article feed list -->
-<div style="background:var(--white);margin-bottom:10px;">
+<div style="background:var(--bg-card);border-radius:0 0 var(--radius-lg) var(--radius-lg);border:1px solid var(--divider);border-top:none;margin-bottom:12px;">
     {% for article in page_obj %}
     <div class="feed-item">
         <div class="feed-item-text">
             <div class="feed-item-title">
                 <a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a>
                 {% if article.is_featured %}
-                <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span>
+                <span class="feed-item-badge">推荐</span>
                 {% endif %}
             </div>
             <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:25 }}</div>
@@ -48,21 +48,21 @@
         {% endif %}
     </div>
     {% empty %}
-    <div class="empty-state"><i class="fas fa-search d-block"></i><p>没有找到相关新闻</p></div>
+    <div class="empty-state"><i class="fas fa-search" style="display:block;"></i><p>没有找到相关新闻</p></div>
     {% endfor %}
 </div>
 
 <!-- Pagination -->
 {% if page_obj.has_other_pages %}
-<div class="pagination-center">
+<div class="pagination-wrap">
     {% if page_obj.has_previous %}
-    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link-zhihu"><i class="fas fa-angle-double-left"></i></a>
-    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link-zhihu">上一页</a>
+    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link"><i class="fas fa-angle-double-left"></i></a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link">上一页</a>
     {% endif %}
-    <span class="page-link-zhihu active">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    <span class="page-link active">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link-zhihu">下一页</a>
-    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link-zhihu"><i class="fas fa-angle-double-right"></i></a>
+    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link">下一页</a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-link"><i class="fas fa-angle-double-right"></i></a>
     {% endif %}
 </div>
 {% endif %}
@@ -71,10 +71,10 @@
 {% block sidebar %}
 {{ block.super }}
 {% if user.is_authenticated %}
-<div class="sidebar-card" style="text-align:center;padding:20px;">
-    <i class="fas fa-pen-fancy" style="font-size:24px;color:var(--blue);margin-bottom:8px;"></i>
-    <p style="font-size:14px;color:var(--text-3);margin-bottom:12px;">分享你的见解</p>
-    <a href="{% url 'create_news_article' %}" class="zhihu-btn-primary" style="font-size:14px;"><i class="fas fa-pen"></i> 写文章</a>
+<div class="sidebar-card" style="text-align:center;padding:28px 20px;">
+    <i class="fas fa-pen-nib" style="font-size:24px;color:var(--accent);margin-bottom:10px;"></i>
+    <p style="font-size:14px;color:var(--text-3);margin-bottom:16px;">分享你的见解</p>
+    <a href="{% url 'create_news_article' %}" class="nav-btn" style="font-size:14px;"><i class="fas fa-pen"></i> 写文章</a>
 </div>
 {% endif %}
 {% endblock %}
