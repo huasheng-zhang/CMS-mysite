@@ -24,6 +24,10 @@ class AutoLoginMiddleware:
         if any(re.match(pattern, request.path) for pattern in exclude_paths):
             return self.get_response(request)
 
+        # 用户已手动退出 — 不再自动登录，让用户以匿名身份浏览
+        if request.session.get('manual_logout'):
+            return self.get_response(request)
+
         # 检查是否已登录
         if not request.user.is_authenticated:
             # 开发环境：尝试自动登录为超级用户

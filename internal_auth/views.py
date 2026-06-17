@@ -43,6 +43,9 @@ class CustomUserCreationForm(UserCreationForm):
 def logout_view(request):
     """自定义注销视图，同时支持 GET 和 POST 请求"""
     logout(request)
+    # logout() 会 flush 旧 session 并创建新匿名 session，
+    # 在新 session 上设置标记，防止 AutoLoginMiddleware 再次自动登录
+    request.session['manual_logout'] = True
     redirect_url = getattr(settings, 'LOGOUT_REDIRECT_URL', '/news/')
     return redirect(redirect_url)
 
