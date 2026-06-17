@@ -452,17 +452,7 @@ def subscribe_tag(request, tag_id):
 @login_required
 @csrf_exempt
 def upload_editor_image(request):
-    """Editor.md 富文本编辑器图片上传接口
-    支持两种上传方式：
-    1. Editor.md iframe上传（工具栏按钮）- 不带csrfmiddlewaretoken，需@csrf_exempt
-    2. AJAX FormData上传（粘贴/拖拽图片）- 带csrfmiddlewaretoken
-    @login_required 提供身份验证保护
-    """
-    from django.views.decorators.clickjacking import xframe_options_sameorigin
-    from django.core.files.storage import default_storage
-    from django.core.files.base import ContentFile
-    import os
-
+    """Editor.md 富文本编辑器图片上传接口"""
     # iframe上传需要X-Frame-Options: SAMEORIGIN
     response = _do_upload(request)
     response['X-Frame-Options'] = 'SAMEORIGIN'
@@ -471,6 +461,11 @@ def upload_editor_image(request):
 
 def _do_upload(request):
     """执行图片上传逻辑"""
+    import os
+    import uuid
+    from django.core.files.storage import default_storage
+    from django.core.files.base import ContentFile
+
     if request.method != 'POST':
         return JsonResponse({'success': 0, 'message': '仅支持POST请求'})
 
@@ -493,7 +488,6 @@ def _do_upload(request):
     save_dir = os.path.join('editor_images', date_dir)
 
     # 生成唯一文件名防止冲突
-    import uuid
     filename = f'{uuid.uuid4().hex[:12]}_{timezone.now().strftime("%H%M%S")}{os.path.splitext(file.name)[1]}'
     save_path = os.path.join(save_dir, filename)
 
