@@ -14,7 +14,11 @@
             {% if article.is_featured %}
             <span class="feed-item-badge">推荐</span>
             {% endif %}
-            <span class="author-name">{{ article.author.username|default:"匿名" }}</span>
+            {% if article.author %}
+            <a href="{% url 'author_detail' article.author.id %}" class="author-name">{{ article.author.username }}</a>
+            {% else %}
+            <span class="author-name">匿名</span>
+            {% endif %}
             {% if user.is_authenticated and article.author and article.author != user %}
             <button class="follow-btn {% if is_following %}following{% else %}not-following{% endif %}" 
                 data-user-id="{{ article.author.id }}" data-following="{% if is_following %}true{% else %}false{% endif %}">
@@ -102,9 +106,51 @@
     <div id="comments-section">
         {% for comment in comments %}
         <div class="comment-item" id="comment-{{ comment.id }}">
-            <span class="comment-author">{{ comment.user.username }}</span>
-            <span class="comment-time">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+            <div class="comment-header">
+                <span class="comment-author">{{ comment.user.username }}</span>
+                <span class="comment-time">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+                {% if user.is_authenticated and article.allow_comments %}
+                <button class="comment-reply-btn" data-comment-id="{{ comment.id }}" data-author="{{ comment.user.username }}">
+                    <i class="fas fa-reply"></i> 回复
+                </button>
+                {% endif %}
+            </div>
             <div class="comment-content">{{ comment.content }}</div>
+            <!-- 回复输入框（默认隐藏） -->
+            {% if user.is_authenticated and article.allow_comments %}
+            <div class="reply-input-area" id="reply-input-{{ comment.id }}" style="display:none;">
+                <form class="reply-form" data-parent-id="{{ comment.id }}">
+                    {% csrf_token %}
+                    <textarea class="reply-content" rows="2" placeholder="回复 {{ comment.user.username }}..." maxlength="1000"></textarea>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+                        <button type="button" class="btn-ghost cancel-reply-btn" style="font-size:13px;padding:6px 12px;">取消</button>
+                        <button type="submit" class="nav-btn reply-submit-btn" style="font-size:13px;padding:6px 14px;"><i class="fas fa-paper-plane"></i> 回复</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+            <!-- 嵌套回复列表 -->
+            {% if comment.replies.all %}
+            <div class="replies-list">
+                {% for reply in comment.replies.all %}
+                {% if reply.is_approved %}
+                <div class="reply-item" id="comment-{{ reply.id }}">
+                    <div class="comment-header">
+                        <span class="comment-author">{{ reply.user.username }}</span>
+                        <span class="reply-to-label">回复 <span class="reply-to-name">{{ comment.user.username }}</span></span>
+                        <span class="comment-time">{{ reply.created_at|date:"Y-m-d H:i" }}</span>
+                        {% if user.is_authenticated and article.allow_comments %}
+                        <button class="comment-reply-btn" data-comment-id="{{ comment.id }}" data-author="{{ reply.user.username }}">
+                            <i class="fas fa-reply"></i> 回复
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="comment-content">{{ reply.content }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
         {% empty %}
         <div id="no-comments" class="empty-state" style="padding:40px 28px;"><p style="font-size:14px">暂无评论，快来抢沙发</p></div>
@@ -186,9 +232,17 @@ $(document).ready(function() {
                 if (r.success) {
                     $('#no-comments').remove();
                     var html = '<div class="comment-item" id="comment-' + r.comment.id + '">' +
-                        '<span class="comment-author">' + escapeHtml(r.comment.author) + '</span>' +
+                        '<div class="comment-header"><span class="comment-author">' + escapeHtml(r.comment.author) + '</span>' +
                         '<span class="comment-time">' + escapeHtml(r.comment.created_at) + '</span>' +
-                        '<div class="comment-content">' + escapeHtml(r.comment.content) + '</div></div>';
+                        '<button class="comment-reply-btn" data-comment-id="' + r.comment.id + '" data-author="' + escapeHtml(r.comment.author) + '"><i class="fas fa-reply"></i> 回复</button></div>' +
+                        '<div class="comment-content">' + escapeHtml(r.comment.content) + '</div>' +
+                        '<div class="reply-input-area" id="reply-input-' + r.comment.id + '" style="display:none;">' +
+                        '<form class="reply-form" data-parent-id="' + r.comment.id + '">' +
+                        '<textarea class="reply-content" rows="2" placeholder="回复 ' + escapeHtml(r.comment.author) + '..." maxlength="1000"></textarea>' +
+                        '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">' +
+                        '<button type="button" class="btn-ghost cancel-reply-btn" style="font-size:13px;padding:6px 12px;">取消</button>' +
+                        '<button type="submit" class="nav-btn reply-submit-btn" style="font-size:13px;padding:6px 14px;"><i class="fas fa-paper-plane"></i> 回复</button>' +
+                        '</div></form></div></div>';
                     $('#comments-section').prepend(html);
                     $('#comment-content').val('');
                     $('#char-count').text('0');
@@ -201,6 +255,79 @@ $(document).ready(function() {
                 showToast(msg, 'error');
             },
             complete: function() { $btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 发布'); }
+        });
+    });
+
+    // 回复按钮点击：展开/切换回复输入框
+    $(document).on('click', '.comment-reply-btn', function() {
+        var commentId = $(this).data('comment-id');
+        var $replyArea = $('#reply-input-' + commentId);
+        // 隐藏其他所有回复输入框
+        $('.reply-input-area').not($replyArea).slideUp(150);
+        // 切换当前回复输入框
+        if ($replyArea.is(':visible')) {
+            $replyArea.slideUp(150);
+        } else {
+            $replyArea.slideDown(150);
+            $replyArea.find('.reply-content').focus();
+        }
+    });
+
+    // 取消回复按钮
+    $(document).on('click', '.cancel-reply-btn', function() {
+        $(this).closest('.reply-input-area').slideUp(150);
+        $(this).closest('.reply-form').find('.reply-content').val('');
+    });
+
+    // 回复表单提交
+    $(document).on('submit', '.reply-form', function(e) {
+        e.preventDefault();
+        var $form = $(this);
+        var parentId = $form.data('parent-id');
+        var content = $form.find('.reply-content').val().trim();
+        if (content.length < 2) { showToast('回复至少2个字符', 'warning'); return; }
+        var $btn = $form.find('.reply-submit-btn');
+        $btn.prop('disabled', true).html('<span class="loading-spinner"></span>');
+
+        $.ajax({
+            url: '{% url "add_comment" article.slug %}',
+            method: 'POST',
+            data: {
+                'content': content,
+                'parent_id': parentId,
+                'csrfmiddlewaretoken': $form.find('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(r) {
+                if (r.success) {
+                    $('#no-comments').remove();
+                    // 在父评论的回复列表中插入新回复
+                    var $parentComment = $('#comment-' + parentId);
+                    var $repliesList = $parentComment.find('.replies-list');
+                    // 如果回复列表不存在，创建一个
+                    if ($repliesList.length === 0) {
+                        $repliesList = $('<div class="replies-list"></div>');
+                        $parentComment.append($repliesList);
+                    }
+                    var replyHtml = '<div class="reply-item" id="comment-' + r.comment.id + '">' +
+                        '<div class="comment-header">' +
+                        '<span class="comment-author">' + escapeHtml(r.comment.author) + '</span>' +
+                        '<span class="reply-to-label">回复 <span class="reply-to-name">' + escapeHtml(r.parent_author) + '</span></span>' +
+                        '<span class="comment-time">' + escapeHtml(r.comment.created_at) + '</span>' +
+                        '<button class="comment-reply-btn" data-comment-id="' + parentId + '" data-author="' + escapeHtml(r.comment.author) + '"><i class="fas fa-reply"></i> 回复</button>' +
+                        '</div><div class="comment-content">' + escapeHtml(r.comment.content) + '</div></div>';
+                    $repliesList.append(replyHtml);
+                    // 清空回复输入框并隐藏
+                    $form.find('.reply-content').val('');
+                    $form.closest('.reply-input-area').slideUp(150);
+                    if (r.comment_count !== undefined) $('#comment-count').text(r.comment_count);
+                    showToast('回复成功', 'success');
+                } else { showToast(r.error || '回复失败', 'error'); }
+            },
+            error: function(xhr) {
+                var msg = xhr.responseJSON ? xhr.responseJSON.error : '回复失败';
+                showToast(msg, 'error');
+            },
+            complete: function() { $btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 回复'); }
         });
     });
 

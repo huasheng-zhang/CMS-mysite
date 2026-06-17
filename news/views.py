@@ -99,12 +99,14 @@ def news_detail(request, slug):
         category=article.category,
     ).exclude(id=article.id)[:5] if article.category else NewsArticle.objects.none()
 
-    # 获取评论
+    # 获取评论（顶级评论 + 预取回复）
     comments = ArticleComment.objects.filter(
         article=article,
         is_approved=True,
         parent__isnull=True,  # 只获取顶级评论
-    ).select_related('user').order_by('-created_at')
+    ).select_related('user').prefetch_related(
+        'replies__user'  # 预取每条评论的回复及回复用户
+    ).order_by('-created_at')
 
     # 检查用户是否点赞
     user_liked = False
@@ -271,7 +273,7 @@ def like_article(request, slug):
 
 @login_required
 def add_comment(request, slug):
-    """添加评论"""
+    """添加评论或回复"""
     if request.method != 'POST':
         return JsonResponse({'error': '仅支持POST请求'}, status=405)
 
@@ -289,10 +291,26 @@ def add_comment(request, slug):
     if len(content) > 1000:
         return JsonResponse({'success': False, 'error': '评论内容不能超过1000个字符'}, status=400)
 
+    # 处理回复：检查 parent_id 参数
+    parent_id = request.POST.get('parent_id', '')
+    parent_comment = None
+    is_reply = False
+    if parent_id:
+        try:
+            parent_comment = ArticleComment.objects.get(
+                id=int(parent_id),
+                article=article,
+                is_approved=True
+            )
+            is_reply = True
+        except (ArticleComment.DoesNotExist, ValueError):
+            return JsonResponse({'success': False, 'error': '父评论不存在'}, status=400)
+
     comment = ArticleComment.objects.create(
         article=article,
         user=request.user,
-        content=content
+        content=content,
+        parent=parent_comment  # 如果是回复，设置父评论
     )
 
     comment_count = ArticleComment.objects.filter(
@@ -300,8 +318,9 @@ def add_comment(request, slug):
         is_approved=True
     ).count()
 
-    return JsonResponse({
+    response_data = {
         'success': True,
+        'is_reply': is_reply,
         'comment': {
             'id': comment.id,
             'content': comment.content,
@@ -309,7 +328,13 @@ def add_comment(request, slug):
             'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M'),
         },
         'comment_count': comment_count,
-    })
+    }
+
+    if is_reply:
+        response_data['parent_id'] = parent_comment.id
+        response_data['parent_author'] = parent_comment.user.username
+
+    return JsonResponse(response_data)
 
 
 def news_home(request):
@@ -523,3 +548,60 @@ def track_read_progress(request):
         return JsonResponse({'success': False, 'error': '文章不存在'})
     except ValueError:
         return JsonResponse({'success': False, 'error': '参数格式错误'})
+
+
+def author_detail(request, user_id):
+    """作者详情页：展示作者信息、粉丝数、历史发布的文章"""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    author = get_object_or_404(User, pk=user_id)
+
+    # 粉丝数
+    follower_count = UserFollow.objects.filter(following=author).count()
+    # 关注数（作者关注了多少人）
+    following_count = UserFollow.objects.filter(follower=author).count()
+
+    # 作者发布的文章
+    articles = NewsArticle.objects.with_counts().published().select_related(
+        'author', 'category'
+    ).prefetch_related('tagged_items__tag').filter(
+        author=author
+    ).order_by('-publish_date')
+
+    # 文章总数
+    article_count = articles.count()
+
+    # 当前用户是否关注了此作者
+    is_following = False
+    if request.user.is_authenticated and author != request.user:
+        is_following = UserFollow.objects.filter(
+            follower=request.user,
+            following=author
+        ).exists()
+
+    # 作者的 UserProfile（如果存在）
+    profile = None
+    try:
+        profile = author.profile
+    except Exception:
+        pass
+
+    # 分页
+    paginator = Paginator(articles, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    categories = get_cached_categories()
+
+    context = {
+        'author': author,
+        'profile': profile,
+        'follower_count': follower_count,
+        'following_count': following_count,
+        'article_count': article_count,
+        'page_obj': page_obj,
+        'is_following': is_following,
+        'categories': categories,
+    }
+    return render(request, 'news/author_detail.html', context)

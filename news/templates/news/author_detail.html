@@ -1,0 +1,142 @@
+{% extends 'news/base.html' %}
+{% block title %}{{ author.username }} 的主页{% endblock %}
+
+{% block content %}
+<!-- Author Profile Card -->
+<div class="author-profile-card">
+    <div class="author-profile-header">
+        <div class="author-avatar">
+            {% if author.avatar %}
+            <img src="{{ author.avatar.url }}" alt="{{ author.username }}">
+            {% else %}
+            <div class="author-avatar-placeholder">{{ author.username|truncatechars:2 }}</div>
+            {% endif %}
+        </div>
+        <div class="author-profile-info">
+            <h1 class="author-profile-name">{{ author.username }}</h1>
+            {% if profile and profile.bio %}
+            <div class="author-profile-bio">{{ profile.bio }}</div>
+            {% endif %}
+            {% if profile and profile.location %}
+            <div class="author-profile-location"><i class="fas fa-map-marker-alt"></i> {{ profile.location }}</div>
+            {% endif %}
+        </div>
+        {% if user.is_authenticated and author != user %}
+        <button class="follow-btn {% if is_following %}following{% else %}not-following{% endif %}"
+            id="author-follow-btn"
+            data-user-id="{{ author.id }}"
+            data-following="{% if is_following %}true{% else %}false{% endif %}">
+            {% if is_following %}已关注{% else %}关注{% endif %}
+        </button>
+        {% endif %}
+    </div>
+
+    <div class="author-stats">
+        <div class="author-stat-item">
+            <span class="author-stat-num" id="follower-count">{{ follower_count }}</span>
+            <span class="author-stat-label">粉丝</span>
+        </div>
+        <div class="author-stat-item">
+            <span class="author-stat-num">{{ following_count }}</span>
+            <span class="author-stat-label">关注</span>
+        </div>
+        <div class="author-stat-item">
+            <span class="author-stat-num">{{ article_count }}</span>
+            <span class="author-stat-label">文章</span>
+        </div>
+    </div>
+</div>
+
+<!-- Author's Articles -->
+<div class="author-articles-section">
+    <div class="section-title"><i class="fas fa-pen-nib"></i> {{ author.username }} 的文章</div>
+    {% for article in page_obj %}
+    <a href="{% url 'news_detail' article.slug %}" class="feed-item">
+        <div class="feed-item-text">
+            <div class="feed-item-title">{{ article.title }}</div>
+            <div class="feed-item-excerpt">{{ article.intro|striptags|truncatechars:120|default:"" }}</div>
+            <div class="feed-item-meta">
+                {% if article.category %}
+                <span class="feed-item-category">{{ article.category.name }}</span>
+                {% endif %}
+                <span>{{ article.publish_date|date:"Y-m-d"|default:"未设定" }}</span>
+                <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
+                <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
+                <span><i class="fas fa-comment"></i> {{ article.get_comment_count }}</span>
+            </div>
+        </div>
+        {% if article.image %}
+        <div class="feed-item-thumb"><img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy"></div>
+        {% endif %}
+    </a>
+    {% empty %}
+    <div class="empty-state"><p style="font-size:14px">该作者暂无已发布的文章</p></div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="pagination-wrap">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="page-link"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+    <span class="page-link active">{{ num }}</span>
+    {% elif num >= page_obj.number|add:'-3' and num <= page_obj.number|add:'3' %}
+    <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+    {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="page-link"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+{{ block.super }}
+<!-- Author detail sidebar -->
+<div class="sidebar-card">
+    <div class="sidebar-card-header"><i class="fas fa-address-card"></i> 作者信息</div>
+    <div class="sidebar-card-body" style="padding:16px 20px;">
+        <div style="font-size:14px;color:var(--text-2);display:flex;flex-direction:column;gap:10px;">
+            {% if profile and profile.department %}
+            <span><i class="fas fa-building" style="color:var(--accent);width:18px;"></i> {{ profile.department }}</span>
+            {% endif %}
+            {% if profile and profile.position %}
+            <span><i class="fas fa-briefcase" style="color:var(--accent);width:18px;"></i> {{ profile.position }}</span>
+            {% endif %}
+            <span><i class="fas fa-calendar" style="color:var(--blue-link);width:18px;"></i> 加入于 {{ author.created_at|date:"Y-m-d" }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 关注按钮
+    $('#author-follow-btn').click(function() {
+        var $btn = $(this);
+        var userId = $btn.data('user-id');
+        $btn.prop('disabled', true);
+        $.ajax({
+            url: '/news/follow/' + userId + '/',
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function(r) {
+                if (r.following) {
+                    $btn.removeClass('not-following').addClass('following').data('following', 'true').text('已关注');
+                } else {
+                    $btn.removeClass('following').addClass('not-following').data('following', 'false').text('关注');
+                }
+                $('#follower-count').text(r.follower_count);
+            },
+            error: function() { showToast('操作失败', 'error'); },
+            complete: function() { $btn.prop('disabled', false); }
+        });
+    });
+});
+</script>
+{% endblock %}

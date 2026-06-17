@@ -332,9 +332,32 @@
         .comment-input-area textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
         .comment-item { padding: 12px 24px; border-bottom: 1px solid var(--divider); }
         .comment-item:last-child { border-bottom: none; }
+        .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
         .comment-author { font-size: 14px; font-weight: 600; color: var(--accent); }
-        .comment-time { font-size: 12px; color: var(--text-4); margin-left: 8px; }
+        .comment-author:hover { color: var(--accent-hover); }
+        .comment-time { font-size: 12px; color: var(--text-4); }
         .comment-content { font-size: 14px; color: var(--text-2); margin-top: 6px; line-height: 1.65; }
+        .comment-reply-btn {
+            font-size: 12px; color: var(--text-4); border: none; background: none;
+            cursor: pointer; padding: 2px 6px; transition: all var(--transition);
+            display: inline-flex; align-items: center; gap: 3px; border-radius: var(--radius-sm);
+        }
+        .comment-reply-btn:hover { color: var(--accent); background: var(--accent-muted); }
+        .comment-reply-btn i { font-size: 11px; }
+        .replies-list { margin-top: 8px; padding-left: 24px; border-left: 2px solid var(--accent-light); }
+        .reply-item { padding: 10px 16px; border-bottom: 1px solid var(--divider); }
+        .reply-item:last-child { border-bottom: none; }
+        .reply-to-label { font-size: 12px; color: var(--text-4); }
+        .reply-to-name { color: var(--blue-link); font-weight: 500; }
+        .reply-input-area { margin-top: 8px; padding: 10px 16px; background: var(--bg-input); border-radius: var(--radius-md); }
+        .reply-input-area textarea {
+            width: 100%; border: 1px solid var(--divider-strong); border-radius: var(--radius-sm);
+            padding: 8px 10px; font-size: 13px; resize: vertical; outline: none;
+            background: var(--bg-card); color: var(--text); transition: border-color var(--transition);
+        }
+        .reply-input-area textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+        .article-meta-bar .author-name { color: var(--accent); font-weight: 600; transition: color var(--transition); }
+        .article-meta-bar a.author-name:hover { color: var(--accent-hover); }
 
         /* ===== Auth ===== */
         .auth-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 44px 36px; max-width: 400px; margin: 44px auto; box-shadow: var(--shadow-md); border: 1px solid var(--divider); }
@@ -367,6 +390,32 @@
         .profile-table td { padding: 8px 0; font-size: 14px; }
         .profile-table .label { color: var(--text-3); width: 90px; font-weight: 500; }
         .profile-table .value { color: var(--text); font-weight: 600; }
+
+        /* ===== Author Detail ===== */
+        .author-profile-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 28px; margin-bottom: 12px; }
+        .author-profile-header { display: flex; align-items: center; gap: 20px; }
+        .author-avatar { width: 64px; height: 64px; flex-shrink: 0; }
+        .author-avatar img { width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: cover; border: 2px solid var(--accent-light); }
+        .author-avatar-placeholder {
+            width: 64px; height: 64px; border-radius: var(--radius-md);
+            background: var(--accent-muted); color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display); font-size: 22px; font-weight: 700;
+            border: 2px solid var(--accent-light);
+        }
+        .author-profile-info { flex: 1; min-width: 0; }
+        .author-profile-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+        .author-profile-bio { font-size: 14px; color: var(--text-2); line-height: 1.6; margin-top: 6px; }
+        .author-profile-location { font-size: 13px; color: var(--text-3); margin-top: 4px; }
+        .author-profile-location i { font-size: 11px; color: var(--text-4); }
+        .author-stats {
+            display: flex; gap: 24px; margin-top: 20px; padding-top: 18px;
+            border-top: 1px solid var(--divider);
+        }
+        .author-stat-item { text-align: center; }
+        .author-stat-num { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); }
+        .author-stat-label { font-size: 12px; color: var(--text-4); display: block; margin-top: 2px; }
+        .author-articles-section { background: var(--bg-card); border-radius: var(--radius-lg); }
 
         /* ===== Hot Rank ===== */
         .hot-rank { font-size: 16px; font-weight: 700; min-width: 24px; color: var(--text-4); font-family: var(--font-display); }

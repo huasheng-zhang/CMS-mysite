@@ -19,6 +19,7 @@ register_converter(UnicodeSlugConverter, 'uslug')
 urlpatterns = [
     path('', views.news_home, name='news_home'),
     path('list/', views.news_list, name='news_list'),
+    path('author/<int:user_id>/', views.author_detail, name='author_detail'),
     path('article/<uslug:slug>/', views.news_detail, name='news_detail'),
     path('create/', views.create_news_article, name='create_news_article'),
     path('edit/<uslug:slug>/', views.edit_news_article, name='edit_news_article'),

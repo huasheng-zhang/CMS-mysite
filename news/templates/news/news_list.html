@@ -31,7 +31,7 @@
             </div>
             <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:25 }}</div>
             <div class="feed-item-meta">
-                <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+                <span><i class="fas fa-user"></i> {% if article.author %}<a href="{% url 'author_detail' article.author.id %}" style="color:var(--accent)">{{ article.author.username }}</a>{% else %}匿名{% endif %}</span>
                 <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
                 {% if article.category %}
                 <span class="feed-item-category">{{ article.category.name }}</span>
