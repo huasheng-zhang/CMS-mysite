@@ -28,4 +28,5 @@ urlpatterns = [
     path('subscribe/category/<int:category_id>/', views.subscribe_category, name='subscribe_category'),
     path('subscribe/tag/<int:tag_id>/', views.subscribe_tag, name='subscribe_tag'),
     path('upload-image/', views.upload_editor_image, name='upload_editor_image'),
+    path('track-read/', views.track_read_progress, name='track_read_progress'),
 ]

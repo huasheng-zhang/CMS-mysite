@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.contrib import messages
 from django.utils import timezone
 from taggit.models import Tag
-from .models import NewsArticle, NewsCategory, NewsIndexPage, ArticleLike, ArticleComment, UserFollow, CategorySubscription, TagSubscription
+from .models import NewsArticle, NewsCategory, NewsIndexPage, ArticleLike, ArticleComment, UserFollow, CategorySubscription, TagSubscription, ArticleReadRecord
 from .forms import NewsArticleForm
 import logging
 import re
@@ -495,3 +495,31 @@ def _do_upload(request):
     url = default_storage.url(saved_path)
 
     return JsonResponse({'success': 1, 'url': url, 'message': '上传成功'})
+
+
+@login_required
+def track_read_progress(request):
+    """更新阅读记录：阅读时长和是否读完"""
+    if request.method != 'POST':
+        return JsonResponse({'error': '仅支持POST'}, status=405)
+    slug = request.POST.get('slug', '')
+    duration = request.POST.get('duration', '0')
+    is_completed = request.POST.get('is_completed', 'false')
+
+    try:
+        article = NewsArticle.objects.get(slug=slug)
+        duration = int(duration)
+        is_completed = is_completed.lower() in ('true', '1', 'yes')
+
+        record = ArticleReadRecord.objects.filter(article=article, user=request.user).first()
+        if record:
+            record.read_duration = duration
+            record.is_completed = is_completed
+            record.save(update_fields=['read_duration', 'is_completed'])
+            return JsonResponse({'success': True, 'duration': duration, 'is_completed': is_completed})
+        else:
+            return JsonResponse({'success': False, 'error': '记录不存在'})
+    except NewsArticle.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '文章不存在'})
+    except ValueError:
+        return JsonResponse({'success': False, 'error': '参数格式错误'})

@@ -247,5 +247,50 @@ function fallbackCopy(text) {
     catch(e) { showToast('复制失败', 'warning'); }
     document.body.removeChild(ta);
 }
+
+// ===== 阅读进度追踪 =====
+{% if user.is_authenticated %}
+var readStartTime = Date.now();
+var hasScrolledToEnd = false;
+var articleSlug = '{{ article.slug }}';
+var trackReadUrl = '{% url "track_read_progress" %}';
+var csrfToken = getCookie('csrftoken');
+
+// 检测滚动完成度：当用户滚动过文章内容80%时标记为读完
+var articleBody = document.querySelector('.article-body');
+if (articleBody) {
+    window.addEventListener('scroll', function() {
+        if (hasScrolledToEnd) return;
+        var rect = articleBody.getBoundingClientRect();
+        var articleHeight = articleBody.scrollHeight;
+        var visibleBottom = window.innerHeight;
+        var scrolledPast = -(rect.top);
+        var scrollPercent = scrolledPast / (articleHeight - visibleBottom);
+        if (scrollPercent >= 0.8) {
+            hasScrolledToEnd = true;
+        }
+    });
+}
+
+// 发送阅读进度数据
+function sendReadProgress() {
+    var duration = Math.round((Date.now() - readStartTime) / 1000);
+    if (duration < 1) return;
+    navigator.sendBeacon && navigator.sendBeacon(trackReadUrl,
+        new FormData(document.createElement('form')));
+    // sendBeacon无法带CSRF，用fetch fallback
+    fetch(trackReadUrl, {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'slug=' + encodeURIComponent(articleSlug) + '&duration=' + duration + '&is_completed=' + hasScrolledToEnd,
+        keepalive: true
+    }).catch(function() {});
+}
+
+// 每30秒上报一次进度
+var readTimer = setInterval(function() { sendReadProgress(); }, 30000);
+// 页面离开时上报
+window.addEventListener('beforeunload', function() { sendReadProgress(); });
+{% endif %}
 </script>
 {% endblock %}

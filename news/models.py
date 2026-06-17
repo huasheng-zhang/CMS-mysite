@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Count, Q
+from django.utils import timezone
 from wagtail.models import Page, PageManager, PageQuerySet
 from wagtail.fields import RichTextField, StreamField
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
@@ -259,7 +260,7 @@ class ArticleReadRecord(models.Model):
         on_delete=models.CASCADE,
         related_name='read_records'
     )
-    read_at = models.DateTimeField("阅读时间", auto_now_add=True)
+    read_at = models.DateTimeField("阅读时间", default=timezone.now)
     read_duration = models.IntegerField("阅读时长(秒)", default=0)
     is_completed = models.BooleanField("是否读完", default=False)
     ip_address = models.GenericIPAddressField("IP地址", null=True, blank=True)
@@ -268,7 +269,7 @@ class ArticleReadRecord(models.Model):
     class Meta:
         verbose_name = "阅读记录"
         verbose_name_plural = "阅读记录"
-        unique_together = ['article', 'user', 'read_at']
+        unique_together = ['article', 'user']
         indexes = [
             models.Index(fields=['article', 'user']),
             models.Index(fields=['read_at']),

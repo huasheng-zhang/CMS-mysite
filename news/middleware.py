@@ -24,16 +24,19 @@ class ReadTrackingMiddleware:
                 request.session.modified = True
 
                 try:
-                    ArticleReadRecord.objects.create(
+                    record, created = ArticleReadRecord.objects.get_or_create(
                         article=request.article,
                         user=request.user,
-                        ip_address=self.get_client_ip(request),
-                        user_agent=request.META.get('HTTP_USER_AGENT', '')[:200]
+                        defaults={
+                            'ip_address': self.get_client_ip(request),
+                            'user_agent': request.META.get('HTTP_USER_AGENT', '')[:200]
+                        }
                     )
-                    logger.debug(
-                        f'记录阅读: 用户 {request.user.username} '
-                        f'阅读了 {request.article.title}'
-                    )
+                    if created:
+                        logger.debug(
+                            f'记录阅读: 用户 {request.user.username} '
+                            f'阅读了 {request.article.title}'
+                        )
                 except Exception as e:
                     logger.error(f'阅读记录创建失败: {e}')
 
