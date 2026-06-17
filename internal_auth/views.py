@@ -1,9 +1,10 @@
 # internal_auth/views.py
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, get_user_model
+from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from django.conf import settings
 from django import forms
 from .models import UserProfile
 from news.models import NewsArticle, UserFollow, CategorySubscription, TagSubscription, NewsCategory
@@ -37,6 +38,13 @@ class CustomUserCreationForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('该邮箱已被注册。')
         return email
+
+
+def logout_view(request):
+    """自定义注销视图，同时支持 GET 和 POST 请求"""
+    logout(request)
+    redirect_url = getattr(settings, 'LOGOUT_REDIRECT_URL', '/news/')
+    return redirect(redirect_url)
 
 
 def register_view(request):
