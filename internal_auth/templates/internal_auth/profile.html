@@ -104,7 +104,8 @@
 </div>
 
 <div style="margin-top:16px;">
-    <a href="{% url 'internal_auth:logout' %}" class="zhihu-btn-ghost"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
+    <form id="logout-form" action="{% url 'internal_auth:logout' %}" method="POST" style="display:none;">{% csrf_token %}</form>
+    <a href="#" onclick="document.getElementById('logout-form').submit(); return false;" class="zhihu-btn-ghost"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
 </div>
 
 <script>

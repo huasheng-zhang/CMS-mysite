@@ -295,7 +295,8 @@
                         <a href="/admin/" class="zhihu-dropdown-item"><i class="fas fa-cog"></i> 管理后台</a>
                         {% endif %}
                         <div class="zhihu-dropdown-divider"></div>
-                        <a href="{% url 'internal_auth:logout' %}" class="zhihu-dropdown-item"><i class="fas fa-sign-out-alt"></i> 退出</a>
+                        <form id="logout-form" action="{% url 'internal_auth:logout' %}" method="POST" style="display:none;">{% csrf_token %}</form>
+                        <a href="#" onclick="document.getElementById('logout-form').submit(); return false;" class="zhihu-dropdown-item"><i class="fas fa-sign-out-alt"></i> 退出</a>
                     </div>
                 </div>
                 {% else %}
