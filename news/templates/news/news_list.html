@@ -22,26 +22,30 @@
 <div style="background:var(--white);margin-bottom:10px;">
     {% for article in page_obj %}
     <div class="feed-item">
+        <div class="feed-item-text">
+            <div class="feed-item-title">
+                <a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a>
+                {% if article.is_featured %}
+                <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span>
+                {% endif %}
+            </div>
+            <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:25 }}</div>
+            <div class="feed-item-meta">
+                <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+                <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
+                {% if article.category %}
+                <span class="feed-item-category">{{ article.category.name }}</span>
+                {% endif %}
+                <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
+                <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
+                <span><i class="fas fa-comment"></i> {{ article.get_comment_count }}</span>
+            </div>
+        </div>
         {% if article.image %}
-        <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
+        <div class="feed-item-thumb">
+            <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
+        </div>
         {% endif %}
-        <div class="feed-item-title">
-            <a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a>
-            {% if article.is_featured %}
-            <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span>
-            {% endif %}
-        </div>
-        <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:25 }}</div>
-        <div class="feed-item-meta">
-            <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
-            <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
-            {% if article.category %}
-            <span class="feed-item-category">{{ article.category.name }}</span>
-            {% endif %}
-            <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
-            <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
-            <span><i class="fas fa-comment"></i> {{ article.get_comment_count }}</span>
-        </div>
     </div>
     {% empty %}
     <div class="empty-state"><i class="fas fa-search d-block"></i><p>没有找到相关新闻</p></div>

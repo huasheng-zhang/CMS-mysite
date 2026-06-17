@@ -18,18 +18,22 @@
     {% if feed_articles %}
     {% for article in feed_articles %}
     <div class="feed-item">
-        {% if article.image %}
-        <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
-        {% endif %}
-        <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a></div>
-        <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:20 }}</div>
-        <div class="feed-item-meta">
-            <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
-            <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
-            {% if article.category %}
-            <span class="feed-item-category">{{ article.category.name }}</span>
-            {% endif %}
+        <div class="feed-item-text">
+            <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a></div>
+            <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:30 }}</div>
+            <div class="feed-item-meta">
+                <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+                <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
+                {% if article.category %}
+                <span class="feed-item-category">{{ article.category.name }}</span>
+                {% endif %}
+            </div>
         </div>
+        {% if article.image %}
+        <div class="feed-item-thumb">
+            <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
+        </div>
+        {% endif %}
     </div>
     {% endfor %}
     {% else %}
@@ -52,17 +56,21 @@
     </div>
     {% for article in featured_articles %}
     <div class="feed-item">
-        {% if article.image %}
-        <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
-        {% endif %}
-        <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a> <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span></div>
-        <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:30 }}</div>
-        <div class="feed-item-meta">
-            <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
-            <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
-            <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
-            <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
+        <div class="feed-item-text">
+            <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a> <span class="feed-item-badge"><i class="fas fa-star"></i> 推荐</span></div>
+            <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:30 }}</div>
+            <div class="feed-item-meta">
+                <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+                <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
+                <span><i class="fas fa-eye"></i> {{ article.get_read_count }}</span>
+                <span><i class="fas fa-thumbs-up"></i> {{ article.get_like_count }}</span>
+            </div>
         </div>
+        {% if article.image %}
+        <div class="feed-item-thumb">
+            <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
+        </div>
+        {% endif %}
     </div>
     {% endfor %}
 </div>
@@ -74,18 +82,22 @@
     </div>
     {% for article in latest_articles %}
     <div class="feed-item">
-        {% if article.image %}
-        <img src="{{ article.image.url }}" class="feed-item-img" alt="{{ article.title }}" loading="lazy">
-        {% endif %}
-        <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a></div>
-        <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:20 }}</div>
-        <div class="feed-item-meta">
-            <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
-            <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
-            {% if article.category %}
-            <span class="feed-item-category">{{ article.category.name }}</span>
-            {% endif %}
+        <div class="feed-item-text">
+            <div class="feed-item-title"><a href="{% url 'news_detail' article.slug %}">{{ article.title }}</a></div>
+            <div class="feed-item-excerpt">{{ article.intro|striptags|truncatewords:30 }}</div>
+            <div class="feed-item-meta">
+                <span><i class="fas fa-user"></i> {{ article.author.username|default:"匿名" }}</span>
+                <span><i class="fas fa-clock"></i> {{ article.publish_date|date:"Y-m-d"|default:"--" }}</span>
+                {% if article.category %}
+                <span class="feed-item-category">{{ article.category.name }}</span>
+                {% endif %}
+            </div>
         </div>
+        {% if article.image %}
+        <div class="feed-item-thumb">
+            <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
+        </div>
+        {% endif %}
     </div>
     {% empty %}
     <div class="empty-state"><i class="fas fa-newspaper d-block"></i><p>暂无新闻</p></div>
